@@ -65,6 +65,9 @@ public class MessageParser {
             case 1:
                 header.parseParam();
                 break;
+            case 2:
+                header.parseParam();
+                break;
             default:
                 Log.e(MessageParser.class.getCanonicalName() ,"解析错误，版本不支持" + header.getVersion());
                 break;

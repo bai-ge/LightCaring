@@ -1,5 +1,9 @@
 package com.carefor.util;
 
+import android.annotation.TargetApi;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
+
 import java.security.MessageDigest;
 
 /**
@@ -29,6 +33,32 @@ public class Tools {
             ret.append(HEX_DIGITS[bytes[i] & 0x0f]);
         }
         return ret.toString();
+    }
+    @TargetApi(Build.VERSION_CODES.N)
+    public static byte[] toByte(long data) {
+        byte[] buf = new byte[Long.BYTES];
+        for (int i = 0; i < buf.length; i++) {
+            buf[i] = (byte) ((data >> (i * 8)) & 0xff);
+        }
+        return buf;
+    }
+
+    @TargetApi(Build.VERSION_CODES.N)
+    public static byte[] toByte(int data) {
+        byte[] buf = new byte[Integer.BYTES];
+        for (int i = 0; i < buf.length; i++) {
+            buf[i] = (byte) ((data >> (i * 8)) & 0xff);
+        }
+        return buf;
+    }
+
+    public static long toLong(byte buf[]) {
+        long data = 0x00;
+        for (int i = buf.length - 1; i >= 0; i--) {
+            data <<= 8;
+            data |= (buf[i] & 0xff);
+        }
+        return data;
     }
 
 

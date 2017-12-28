@@ -139,6 +139,11 @@ public class PhonePresenter implements PhoneContract.Presenter {
         public void exceptionCaught(Throwable cause) {
             mPhonefragment.showLog("异常:" + cause.getMessage());
         }
+
+        @Override
+        public void showDelay(long delay) {
+            mPhonefragment.showDelayTime(delay);
+        }
     };
 
     private Connector.OnConnectorListener mOnConnectorListener = new Connector.OnConnectorListener() {

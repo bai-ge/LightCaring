@@ -29,6 +29,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
     private Handler mHandler;
     private Toast mToast;
 
+    private TextView mTextDelayTime;
     private CircleImageView mImg;
     private TextView mTextUserName;
     private TextView mTextAddress;
@@ -56,6 +57,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_phone, container, false);
+        mTextDelayTime = (TextView) root.findViewById(R.id.network_speed);
         mImg = (CircleImageView) root.findViewById(R.id.user_img);
         mTextUserName = (TextView) root.findViewById(R.id.user_name);
         mTextAddress = (TextView) root.findViewById(R.id.address);
@@ -139,6 +141,16 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
             @Override
             public void run() {
                 mEditLog.append(mSimpleDateFormat.format(new Date()) + " " + text + "\n");
+            }
+        });
+    }
+
+    @Override
+    public void showDelayTime(final long delay) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+              mTextDelayTime.setText(String.valueOf(delay)+"ms");
             }
         });
     }

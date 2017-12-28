@@ -20,6 +20,8 @@ public interface PhoneContract {
 //      void showAddress(User user);
 
 
+        void showDelayTime(long delay);
+
         void showName(String name);
 
         void showAddress(String address);

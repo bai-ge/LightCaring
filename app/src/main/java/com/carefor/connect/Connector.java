@@ -8,6 +8,7 @@ import com.carefor.data.entity.Transinformation;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.telephone.TelePhone;
 import com.carefor.telephone.TelePhoneAPI;
+import com.google.common.collect.Interners;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -277,6 +278,10 @@ public class Connector {
                 int type = (int) attr.get("type");
                 switch (type) {
                     case MessageManager.TYPE_VOICE:
+                        if(attr.containsKey("delay")){
+                            Log.d(TAG, "数据延时："+ String.valueOf((long)attr.get("delay")));
+                            TelePhone.getInstance().setDelayTime((long)attr.get("delay"));
+                        }
                         OnReceiveVoice((byte[]) attr.get(MessageManager.getTagName(MessageManager.TAG_VOICE)));
                         break;
                     case MessageManager.TYPE_P2P:

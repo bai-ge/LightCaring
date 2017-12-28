@@ -38,6 +38,8 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
 
     private static ExecutorService fixedThreadPool = null;
 
+    private long mDelayTime;
+
     private long mPlayTime;
 
 
@@ -67,6 +69,9 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             mPlayTime = System.currentTimeMillis();
             player.play(recordData);
         }
+        if(mListener != null){
+           mListener.showDelay(mDelayTime);
+        }
     }
 
     public int getStatus() {
@@ -78,6 +83,13 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         mStatus = status;
     }
 
+    public long getDelayTime() {
+        return mDelayTime;
+    }
+
+    public void setDelayTime(long mDelayTime) {
+        this.mDelayTime = mDelayTime;
+    }
 
     @Override
     public void exceptionCaught(Throwable cause) {
@@ -104,14 +116,14 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             stop();
         }
         if (cacheRepository.isP2PConnectSuccess()) {
-            buf = MessageManager.udpData(MessageManager.TYPE_VOICE, MessageManager.TAG_VOICE, recordData);
+            buf = MessageManager.udpData(true, MessageManager.TYPE_VOICE, MessageManager.TAG_VOICE, recordData);
             if (buf != null) {
-                connector.afxSendMessage(cacheRepository.getP2PIp(), cacheRepository.getP2PPort(), buf);
+                connector.sendMessage(cacheRepository.getP2PIp(), cacheRepository.getP2PPort(), buf);
             } else {
                 Log.d(TAG, "语音数据打包失败");
             }
         } else {
-            buf = MessageManager.udpServerTranf(cacheRepository.getDeviceId(),
+            buf = MessageManager.udpServerTranf(true, cacheRepository.getDeviceId(),
                     cacheRepository.getTalkWith(),
                     MessageManager.TYPE_TRANF,
                     MessageManager.TAG_VOICE,
@@ -279,6 +291,7 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         }
     }
 
+
     public void showLog(String text) {
         Log.d(TAG, text);
         if (mListener != null) {
@@ -298,6 +311,8 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         void showTip(String text);
 
         void showLog(String text);
+
+        void showDelay(long delay);
 
         void exceptionCaught(Throwable cause);
     }

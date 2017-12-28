@@ -5,11 +5,13 @@ import android.util.Log;
 
 import com.carefor.data.entity.MessageHeader;
 import com.carefor.data.source.cache.CacheRepository;
+import com.carefor.util.Tools;
 
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.SynchronousQueue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -21,7 +23,7 @@ public class MessageManager {
 
     private final static String TAG = MessageManager.class.getName();
 
-    public final static int VERSION = 1;
+    public final static int VERSION = 2;
 
     public static String login() {
 
@@ -212,6 +214,35 @@ public class MessageManager {
         byteBuffer.put(data);
         return byteBuffer.array();
     }
+    public static byte[] udpData(boolean needTime, int type, int tag, byte[] data) {
+        checkNotNull(data);
+        if (getTypeName(type).isEmpty() || getTagName(tag).isEmpty()) {
+            return null;
+        }
+        long startTime = System.currentTimeMillis();
+        int timeLen = 0;
+        if(needTime){
+            timeLen = 4;
+            type |= 0x80;
+        }
+        int dataLen = data.length + 3;
+        ByteBuffer byteBuffer = ByteBuffer.allocate(timeLen + dataLen + 4);
+        // 头部
+        byteBuffer.put((byte) VERSION);
+        byteBuffer.put((byte) type);
+        if(needTime){
+            int now = (int)(System.currentTimeMillis() & 0xFFFFFFFFL);
+            byteBuffer.put(Tools.toByte(now));
+        }
+        byteBuffer.putShort((short) (dataLen));
+
+        // TAG
+        byteBuffer.put((byte) tag);
+        byteBuffer.putShort((short) data.length);
+        byteBuffer.put(data);
+        Log.d("Connector", "装包时间"+String.valueOf(System.currentTimeMillis() - startTime));
+        return byteBuffer.array();
+    }
 
     public static byte[] udpServerTranf(String deviceId, String desId, int type, int tag, byte[] data) {
         checkNotNull(deviceId);
@@ -221,11 +252,52 @@ public class MessageManager {
         if (getTypeName(type).isEmpty() || getTagName(tag).isEmpty()) {
             return null;
         }
+
+
         int dataLen = deviceId.length() + desId.length() + data.length + 9;
         ByteBuffer byteBuffer = ByteBuffer.allocate(dataLen + 4);
         // 头部
         byteBuffer.put((byte) VERSION);
         byteBuffer.put((byte) type);
+        byteBuffer.putShort((short) (dataLen));
+
+        // TAG
+        byteBuffer.put((byte) TAG_DEVICE_ID);
+        byteBuffer.putShort((short) deviceId.length());
+        byteBuffer.put(deviceId.getBytes());
+
+        byteBuffer.put((byte) TAG_DES_ID);
+        byteBuffer.putShort((short) desId.length());
+        byteBuffer.put(desId.getBytes());
+
+        byteBuffer.put((byte) tag);
+        byteBuffer.putShort((short) data.length);
+        byteBuffer.put(data);
+
+        return byteBuffer.array();
+    }
+    public static byte[] udpServerTranf(boolean needTime, String deviceId, String desId, int type, int tag, byte[] data) {
+        checkNotNull(deviceId);
+        checkNotNull(desId);
+        checkNotNull(data);
+
+        if (getTypeName(type).isEmpty() || getTagName(tag).isEmpty()) {
+            return null;
+        }
+        int timeLen = 0;
+        if(needTime){
+            timeLen = 4;
+            type |= 0x80;
+        }
+        int dataLen = deviceId.length() + desId.length() + data.length + 9;
+        ByteBuffer byteBuffer = ByteBuffer.allocate(timeLen + dataLen + 4);
+        // 头部
+        byteBuffer.put((byte) VERSION);
+        byteBuffer.put((byte) type);
+        if(needTime){
+            int now = (int)(System.currentTimeMillis() & 0xFFFFFFFFL);
+            byteBuffer.put(Tools.toByte(now));
+        }
         byteBuffer.putShort((short) (dataLen));
 
         // TAG
@@ -251,9 +323,17 @@ public class MessageManager {
         int version = byteBuffer.get();
         int type;
         int size;
+        long startTime = System.currentTimeMillis();
         if (version == MessageManager.VERSION) {
             type = byteBuffer.get();
-            attr.put("type", type);
+            attr.put("type", type & 0x7f);
+            if((type & 0x80) > 0){
+                byte[] timeBuf = new byte[4];
+                byteBuffer.get(timeBuf);
+                long sendTime = Tools.toLong(timeBuf);
+                long now = System.currentTimeMillis() & 0xFFFFFFFFL;
+                attr.put("delay", now - sendTime);
+            }
             size = byteBuffer.getShort();
             if (size < byteBuffer.remaining()) {
                 // 解析剩余的TAG
@@ -276,6 +356,7 @@ public class MessageManager {
                 return null;
             }
         }
+        Log.d("Connector", "解包时间"+String.valueOf(System.currentTimeMillis() - startTime));
         return attr;
     }
 
