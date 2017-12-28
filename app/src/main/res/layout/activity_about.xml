@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/appbar"
+             layout="@layout/include_toolbar"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.7"
+            android:background="@color/about_content">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/about_content"/>
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:padding="15dp"
+                android:text="功能介绍：\n
+        本项目针对需要护理照料的人，比如老人，小孩，残疾人等，为他们提供方便快捷的服务，为他们的人生安全提供保障。监护人可以方便的了解被监护人的位置状态，防止走失；可以远程设置被监护人的服药提醒功能以及注意事项；被监护人可以通过应用，一键呼救，向监护人发送位置及语音信息等；家政服务功能：在考虑特殊人群的使用方便上，被监护人客户端可以不用进行任何操作，监护人的移动端就可以随时进行通话，定位等功能。"
+                android:textSize="17sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginRight="20dp"
+                android:text="轻护理应用"
+                android:textSize="17sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginRight="20dp"
+                android:text="当前版本：1.0.0"
+                android:textSize="17sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+</LinearLayout>

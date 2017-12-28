@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#dedede"
+    android:padding="10dp">
+    <!--左边，接收到的信息-->
+    <RelativeLayout
+        android:id="@+id/left_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <com.carefor.view.CircleImageView
+            android:id="@+id/left_head"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:src="@drawable/head_img"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+        <LinearLayout
+            android:id="@+id/left_msg_frame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/left_head"
+            android:layout_toEndOf="@id/left_head"
+            android:orientation="vertical">
+            <!--用户名称-->
+            <TextView
+                android:id="@+id/left_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:text="@string/user_name" />
+            <!--信息背景图-->
+            <LinearLayout
+                android:id="@+id/bg_message_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/message_left2">
+                <!--信息-->
+                <TextView
+                    android:id="@+id/left_msg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    android:maxWidth="170dp"
+                    android:text="@string/chat_msg"
+                    android:textColor="#fff" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/left_msg_frame"
+            android:layout_toEndOf="@id/left_msg_frame">
+            <ProgressBar
+                android:id="@+id/left_progress"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="10dp" />
+            <Button
+                android:id="@+id/left_warning_but"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="10dp"
+                android:gravity="center"
+                android:background="@drawable/btn_warning">
+            </Button>
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+
+    <!--右边，发送信息-->
+    <RelativeLayout
+        android:id="@+id/right_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <com.carefor.view.CircleImageView
+            android:id="@+id/right_head"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/head_img" />
+
+        <LinearLayout
+            android:id="@+id/right_msg_frame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@id/right_head"
+            android:layout_toStartOf="@id/right_head"
+            android:orientation="vertical">
+            <!--用户名称-->
+            <TextView
+                android:id="@+id/right_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:text="@string/user_name" />
+            <!--信息背景图-->
+            <LinearLayout
+                android:id="@+id/bg_message_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/message_right2">
+
+                <TextView
+                    android:id="@+id/right_msg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    android:maxWidth="170dp"
+                    android:text="@string/chat_msg"/>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/right_msg_frame"
+            android:layout_toStartOf="@id/right_msg_frame">
+            <Button
+                android:id="@+id/right_warning_but"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="10dp"
+                android:gravity="center"
+                android:background="@drawable/btn_warning">
+            </Button>
+            <ProgressBar
+                android:id="@+id/right_progress"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="10dp" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+    <LinearLayout
+        android:id="@+id/inform_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:gravity="center">
+        <TextView
+            android:id="@+id/inform_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:text="@string/inform"/>
+    </LinearLayout>
+
+</LinearLayout>

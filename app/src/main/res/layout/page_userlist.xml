@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/bg_telephone"
+              android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/system_inform_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/yellow">
+        <TextView
+            android:id="@+id/inform_text"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="正在通话中……"
+            android:textColor="@color/colorTheme2"/>
+        <TextView
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorTheme2"
+            android:textSize="15dp"
+            android:layout_marginRight="@dimen/fab_margin"
+            android:text=">"
+            />
+    </RelativeLayout>
+
+    <com.carefor.view.ScrollChildSwipeRefreshLayout
+        android:id="@+id/refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ListView
+            android:id="@+id/user_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </ListView>
+    </com.carefor.view.ScrollChildSwipeRefreshLayout>
+</LinearLayout>

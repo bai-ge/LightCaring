@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_member_manage"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.carefor.membermanage.MemberManageActivity"
+    android:orientation="vertical">
+
+    <include android:id="@+id/appbar"
+        layout="@layout/include_toolbar"
+        xmlns:android="http://schemas.android.com/apk/res/android" />
+
+    <com.carefor.view.ScrollChildSwipeRefreshLayout
+        android:id="@+id/refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ListView
+            android:layout_below="@+id/appbar"
+            android:id="@+id/listview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fastScrollEnabled="true"
+            android:focusable="true"
+            android:listSelector="@android:color/transparent"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:divider="@null"
+            android:dividerHeight="4dp"
+            android:padding="12dp" />
+    </com.carefor.view.ScrollChildSwipeRefreshLayout>
+
+
+</LinearLayout>

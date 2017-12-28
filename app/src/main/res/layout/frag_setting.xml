@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/rl_title"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/com_title_height"
+        android:background="@color/colorPrimary">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="设置"
+            android:textColor="@color/color_white"
+            android:textSize="18sp"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_name"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_name"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/name_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="用户名"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/txt_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:maxLength="8"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_server"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_server"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/server_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="服务器IP"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <EditText
+                android:id="@+id/et_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_port"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_port"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/port_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="服务器TCP端口"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <EditText
+                android:id="@+id/et_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_udp_port"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_udp_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_udp_port"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/udp_port_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="服务器UDP端口"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <EditText
+                android:id="@+id/et_udp_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:maxLength="8"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_device"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_device"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_device"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/device_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="本机设备ID"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/txt_device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="10dp">
+
+        <ImageView
+            android:id="@+id/icon_talk"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/icon_user_name"/>
+
+        <LinearLayout
+            android:id="@+id/ll_talk"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/icon_talk"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/talk_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="对方设备ID"
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+
+            <EditText
+                android:id="@+id/et_talk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@null"
+                android:drawableBottom="@drawable/shape_edittext_bottom_line"
+                android:hint=""
+                android:textColor="@color/baseGrayNor"
+                android:textSize="15sp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/btn_write"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_button"
+        android:text="写入配置"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_clear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_button"
+        android:text="清除配置"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+</LinearLayout>

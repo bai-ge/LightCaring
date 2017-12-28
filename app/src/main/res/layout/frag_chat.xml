@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ListView
+        android:id="@+id/chat_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#dedede"
+        android:divider="#0000"></ListView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:focusableInTouchMode="true"
+        android:gravity="center">
+
+        <!--让EditText打开时不获得焦点-->
+        <EditText
+            android:id="@+id/input_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_style_select"
+            android:hint="@string/input_hint"
+            android:maxLines="2" />
+
+        <Button
+            android:id="@+id/send_msg"
+            android:layout_width="60dp"
+            android:layout_height="37dp"
+            android:layout_margin="10dp"
+            android:background="@drawable/btn_invalid"
+            android:text="发送"
+            android:textColor="@color/colorWhite" />
+    </LinearLayout>
+</LinearLayout>

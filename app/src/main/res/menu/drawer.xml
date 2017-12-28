@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+    <group android:checkableBehavior="single">
+        <group android:id="@+id/grp1" >
+            <item
+                android:id="@+id/navigation_menu_home"
+                android:icon="@drawable/ic_home1"
+                android:title="@string/navigation_home"/>
+            <item
+                android:id="@+id/navigation_menu_setting"
+                android:icon="@drawable/ic_setting3"
+                android:title="@string/navigation_settings"/>
+            <item
+                android:id="@+id/navigation_menu_info"
+                android:icon="@drawable/ic_info"
+                android:title="@string/navigation_about"/>
+            <item
+                android:id="@+id/navigation_membermanage"
+                android:icon="@drawable/ic_member"
+                android:title="成员管理"/>
+
+        </group>
+
+        <group android:id="@+id/grp2" >
+            <item
+                android:id="@+id/navigation_menu_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/navigation_logout"/>
+            <item
+                android:id="@+id/navigation_menu_exit"
+                android:icon="@drawable/ic_exit1"
+                android:title="@string/navigation_return"/>
+        </group>
+
+
+    </group>
+</menu>

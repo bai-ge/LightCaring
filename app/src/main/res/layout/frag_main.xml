@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#dededede"
+    android:orientation="vertical">
+    <!--标题栏-->
+    <include layout="@layout/include_title"></include>
+
+
+    <EditText
+        android:id="@+id/device_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:drawableBottom="@drawable/shape_edittext_bottom_line"
+        android:hint="对方设备ID"/>
+    <!--测试专用-->
+    <Button
+        android:id="@+id/btn_phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/bg_button"
+        android:text="@string/Voice_Communication"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_drop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/bg_button"
+        android:text="@string/Drop_Detection"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/bg_button"
+        android:text="@string/Trajectory_Tracking"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/bg_button"
+        android:text="@string/Domestic_Service"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_remind"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/bg_button"
+        android:text="@string/Drug_Reminding"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+    <Button
+        android:id="@+id/btn_jpush"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/bg_button"
+        android:text="极光推送"
+        android:textColor="@color/color_white"
+        android:textSize="18sp"/>
+
+</LinearLayout>

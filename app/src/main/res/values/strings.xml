@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">LightCaring</string>
+    <string name="ip_format">255.255.255.255</string>
+    <string name="user_name">User name</string>
+    <string name="phone">13077790403</string>
+
+    <string name="input_hint"></string>
+    <string name="inform">This is an inform</string>
+    <string name="chat_msg">This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.This is a chat message.</string>
+
+    <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="navigation_settings">设置</string>
+    <string name="navigation_about">关于</string>
+    <string name="navigation_home">主页</string>
+    <string name="navigation_logout">注销</string>
+    <string name="navigation_return">退出</string>
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
+    <string name="Voice_Communication">语音通话</string>
+    <string name="Drop_Detection">跌倒检测</string>
+    <string name="Trajectory_Tracking">轨迹跟踪</string>
+    <string name="Domestic_Service">家政服务</string>
+    <string name="Drug_Reminding">吃药提醒</string>
+    <string name="More">更多</string>
+
+    <string name="hello">Hello World, JPush!</string>
+    <string name="tag_hint">Tag为大小写字母，数字，下划线,中文， 多个用以逗号分隔</string>
+    <string name="alias_hint">Alias为大小写字母，数字，下划线</string>
+    <string name="style_hint">style为数字</string>
+    <string name="error_style_empty">style不能为空</string>
+    <string name="error_alias_empty">alias不能为空</string>
+    <string name="error_tag_empty">tag不能为空</string>
+    <string name="error_tag_gs_empty">格式不对</string>
+    <string name="error_network">网络连接异常,初始化失败 请检查网络！</string>
+    <string name="logining">程序在后台执行, 请查看日志！</string>
+    <string name="setting_su">设置成功</string>
+
+    <string-array name="sex">
+        <item>男</item>
+        <item>女</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
