@@ -8,6 +8,7 @@ import java.security.MessageDigest;
 
 public class Tools {
 
+    //获取MD5编码
     public static String MD5(String s) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
