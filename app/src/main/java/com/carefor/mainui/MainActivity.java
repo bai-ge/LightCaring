@@ -1,8 +1,12 @@
 package com.carefor.mainui;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -17,6 +21,7 @@ import android.widget.Toast;
 import com.carefor.BaseActivity;
 import com.carefor.about.AboutActivity;
 import com.carefor.connect.ConnectService;
+import com.carefor.connect.HeartBeatService;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.LocalRepository;
@@ -29,6 +34,7 @@ import cn.jpush.android.api.JPushInterface;
 
 
 public class MainActivity extends BaseActivity {
+
     private final static String TAG = MainActivity.class.getCanonicalName();
 
     private DrawerLayout mDrawerLayout;
@@ -38,6 +44,8 @@ public class MainActivity extends BaseActivity {
     private Toast mToast;
 
     private ConnectService.ConnectBinder mBinder = null;
+
+
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -64,8 +72,7 @@ public class MainActivity extends BaseActivity {
         bindService(intent, mConnection, BIND_AUTO_CREATE);//绑定服务
         */
 
-//        intent = new Intent(this, ConnectService.class);
-//        startService(intent);//调用onStartCommand()
+
 
         // Set up the navigation drawer.
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -85,6 +92,9 @@ public class MainActivity extends BaseActivity {
         CacheRepository cacheRepository = CacheRepository.getInstance();
         cacheRepository.readConfig(this);
 
+        Intent intent = new Intent(MainActivity.this, HeartBeatService.class);
+        startService(intent);//调用onStartCommand()
+
         MainFragment mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
         if (mainFragment == null) {
             // Create the fragment
@@ -99,8 +109,9 @@ public class MainActivity extends BaseActivity {
         Repository repository = Repository.getInstance(LocalRepository.getInstance(getApplicationContext()));
         MainPresenter mainPresenter = new MainPresenter(repository, mainFragment);
         mainPresenter.setOnPresenterListener(mOnPresenterListener);
-        Log.d("guide_page", "启动主页面");
 
+
+        Log.d("guide_page", "启动主页面");
     }
 
     @Override
@@ -129,7 +140,6 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public void startService(Class content) {
-            Log.d("Service", "开始启动服务");
             Intent intent = new Intent(MainActivity.this, content);
             MainActivity.this.startService(intent);
         }

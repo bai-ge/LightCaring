@@ -135,6 +135,18 @@ public class Connector {
         }
     }
 
+    //发送心跳包
+    public void sendHeartBeat(){
+        if(fixedThreadPool != null){
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    sendMessage("\n\r");
+                }
+            });
+        }
+    }
+
     public void afxConnectServer() {
         fixedThreadPool.submit(mConnectRunnable);
     }
