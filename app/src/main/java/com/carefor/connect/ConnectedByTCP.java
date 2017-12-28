@@ -25,7 +25,7 @@ public class ConnectedByTCP {
 
 	private int timeOut = 400000;
 
-	private long receiveTime;
+	private long mReceiveTime;
 
 	public ConnectedByTCP(String deviceId, Socket socket, OnTCPConnectListener listener) {
 		this.mid = deviceId;
@@ -39,6 +39,7 @@ public class ConnectedByTCP {
 				mBufWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream())));// 发送数据
 				mBufReader = new BufferedReader(new InputStreamReader(mSocket.getInputStream())); // 接收数据
 				mIsWork = true;
+                mReceiveTime = System.currentTimeMillis();
 				receive();
 			} else {
 				mIsWork = false;
@@ -58,6 +59,7 @@ public class ConnectedByTCP {
 					while (mIsWork && mSocket != null) {
 						String msg = mBufReader.readLine();
 						Log.v(TAG, mid+"接收到信息"+msg);
+                        mReceiveTime = System.currentTimeMillis();
 						if (msg == null) {
 							mIsWork = false;
 						} else if (!msg.equals("\n") && !msg.isEmpty()) {
@@ -69,6 +71,7 @@ public class ConnectedByTCP {
 				} catch (Exception e) {
 					throwException(e);
 				}
+				mIsWork = false;
 				mListener.disconnected(mid);
 			}
 		};
@@ -118,7 +121,7 @@ public class ConnectedByTCP {
 	}
 
 	public boolean isWork() {
-		return mIsWork;
+		return mIsWork && (System.currentTimeMillis() - mReceiveTime) < 60 * 1000;
 	}
 
 	public void setIsWork(boolean isWork) {

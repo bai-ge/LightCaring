@@ -141,7 +141,7 @@ public class Connector {
             fixedThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    sendMessage("\n\r");
+                    sendMessage("\r\n");
                 }
             });
         }
@@ -249,6 +249,7 @@ public class Connector {
 
         @Override
         public void disconnected(String uuid) {
+
 
         }
 

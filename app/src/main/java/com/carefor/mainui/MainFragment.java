@@ -67,8 +67,8 @@ public class MainFragment extends Fragment implements MainContract.View {
             @Override
             public void onClick(View v) {
                 showTip(((ItemCardView)v).getText().toString());
-                mPresenter.callTo();
                 mPresenter.skipToActivity(PhoneActivity.class);
+                mPresenter.callTo();
             }
         });
         root.findViewById(R.id.btn_drop).setOnClickListener(new View.OnClickListener() {

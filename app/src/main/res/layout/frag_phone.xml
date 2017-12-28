@@ -1,98 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_telephone">
     <!--信息显示区域-->
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_marginLeft="@dimen/fab_margin"
-    android:layout_marginRight="@dimen/fab_margin"
-    android:layout_alignBottom="@+id/btn_area"
-    android:layout_centerHorizontal="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="@dimen/fab_margin"
+        android:layout_marginRight="@dimen/fab_margin"
+        android:orientation="vertical">
 
-    <com.carefor.view.CircleImageView
-        android:id="@+id/user_img"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_gravity="center"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/head_img"
-        app:civ_border_color="@color/colorWhite"
-        app:civ_border_width="1dp" />
-    <TextView
-        android:id="@+id/user_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="5dp"
-        android:textSize="25sp"
-        android:text="@string/app_name"
-        android:textAlignment="center"
-        android:textColor="@color/colorWhite" />
-    <TextView
-        android:id="@+id/address"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textAlignment="center"
-        android:textColor="@color/colorWhitePrimary"
-        android:text="192.168.1.1:5564"/>
-    <TextView
-        android:id="@+id/status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/colorWhitePrimary"
-        android:textAlignment="center"
-        android:layout_margin="5dp"
-        android:text="正在连接……"/>
-    <EditText
-        android:id="@+id/log"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textColor="@color/green"
-        android:background="@null"
-        android:editable="false"
-        android:textSize="14dp"
-        android:text=""
-        android:maxLines="5"/>
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="right">
+
+            <TextView
+                android:id="@+id/network_speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:text="125ms"
+                android:textColor="@color/green"/>
+        </LinearLayout>
+
+        <com.carefor.view.CircleImageView
+            android:id="@+id/user_img"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@drawable/head_img"
+            app:civ_border_color="@color/colorWhite"
+            app:civ_border_width="1dp"/>
+
+        <TextView
+            android:id="@+id/user_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="5dp"
+            android:text="@string/app_name"
+            android:textAlignment="center"
+            android:textColor="@color/colorWhite"
+            android:textSize="25sp"/>
+
+        <TextView
+            android:id="@+id/address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="192.168.1.1:5564"
+            android:textAlignment="center"
+            android:textColor="@color/colorWhitePrimary"/>
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="正在连接……"
+            android:textAlignment="center"
+            android:textColor="@color/colorWhitePrimary"/>
+
+        <EditText
+            android:id="@+id/log"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            android:maxLines="5"
+            android:editable="false"
+            android:text=""
+            android:textColor="@color/green"
+            android:textSize="14dp"/>
+    </LinearLayout>
 
     <!--按钮区域-->
     <LinearLayout
-        android:id="@+id/btn_area"
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="@dimen/fab_margin"
-        android:gravity="center"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/btn_hang_up"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_margin="@dimen/fab_margin"
-            android:layout_gravity="center"
-            android:background="@drawable/btn_hang_up" />
-        <Button
-            android:id="@+id/btn_pick_up"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_margin="@dimen/fab_margin"
-            android:layout_gravity="center"
-            android:background="@drawable/btn_pick_up"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@id/btn_area">
+        android:orientation="vertical">
 
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btn_silence"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/ic_silence2"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/btn_silence"
+                    android:text="静音"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"/>
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp">
+
+                <Button
+                    android:id="@+id/btn_record"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/ic_record2"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/btn_record"
+                    android:text="录音"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp">
+
+                <Button
+                    android:id="@+id/btn_loudspeaker"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/ic_loudspeaker1"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/btn_loudspeaker"
+                    android:text="免提"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"/>
+            </RelativeLayout>
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_area"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/fab_margin"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_hang_up"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/fab_margin"
+                android:background="@drawable/btn_hang_up"/>
+
+            <Button
+                android:id="@+id/btn_pick_up"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/fab_margin"
+                android:background="@drawable/btn_pick_up"/>
+        </LinearLayout>
     </LinearLayout>
+
 </RelativeLayout>
 
 

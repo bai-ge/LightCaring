@@ -43,7 +43,7 @@ public class HeartBeatService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
@@ -57,9 +57,9 @@ public class HeartBeatService extends Service {
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, startintent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if(Build.VERSION.SDK_INT < 19){
-            am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 10000, pendingIntent);
+            am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 30000, pendingIntent);
         }else{
-            am.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 10000, pendingIntent);
+            am.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 30000, pendingIntent);
         }
         return super.onStartCommand(intent, flags, startId);
     }
