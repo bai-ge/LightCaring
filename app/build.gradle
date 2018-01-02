@@ -41,6 +41,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+//    sourceSets {
+//        main {
+//            jniLibs.srcDirs = ['libs']
+//        }
+//    }
 }
 
 dependencies {
@@ -56,6 +61,9 @@ dependencies {
     compile 'com.google.guava:guava:16.0.1'
     compile files('libs/AMap3DMap_4.1.3_AMapLocation_3.2.0_20161208.jar')
     compile 'com.github.zcweng:switch-button:0.0.3@aar'
-    compile 'cn.jiguang.sdk:jpush:3.1.0'  // 此处以JPush 3.1.0 版本为例。
-    compile 'cn.jiguang.sdk:jcore:1.1.8'  // 此处以JCore 1.1.8 版本为例。
+    compile 'cn.jiguang.sdk:jpush:3.1.0'
+    // 此处以JPush 3.1.0 版本为例。
+    compile 'cn.jiguang.sdk:jcore:1.1.8'
+    // 此处以JCore 1.1.8 版本为例。
+    compile files('libs/BaiduLBS_Android.jar')
 }

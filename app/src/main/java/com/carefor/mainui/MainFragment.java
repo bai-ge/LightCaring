@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.carefor.data.entity.User;
 import com.carefor.dropdetection.DropDetectionActivity;
+import com.carefor.location.LocationActivity;
 import com.carefor.telephone.PhoneActivity;
 import com.carefor.view.ItemCardView;
 
@@ -84,6 +85,7 @@ public class MainFragment extends Fragment implements MainContract.View {
             @Override
             public void onClick(View v) {
                 showTip(((ItemCardView)v).getText().toString());
+                mPresenter.skipToActivity(LocationActivity.class);
             }
         });
         root.findViewById(R.id.btn_service).setOnClickListener(new View.OnClickListener() {

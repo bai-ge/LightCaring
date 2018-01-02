@@ -9,6 +9,7 @@ import com.carefor.data.entity.DeviceModel;
 import com.carefor.data.source.cache.CacheRepository;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -42,10 +43,12 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
 
     private long mPlayTime;
 
+    private ByteBuffer voiceBuf;
 
     private TelePhone() {
         mStatus = Status.LEISURE;
         isConnectServer = false;
+        voiceBuf = ByteBuffer.allocate(20 * 10);
         fixedThreadPool = Executors.newFixedThreadPool(5);//创建最多能并发运行5个线程的线程池
     }
 
@@ -65,9 +68,20 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     }
 
     public void play(byte[] recordData) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(recordData);
+        byte[] voice = new byte[20];
         if (player != null) {
             mPlayTime = System.currentTimeMillis();
-            player.play(recordData);
+            while (byteBuffer.remaining() >= voice.length) {
+                byteBuffer.get(voice);
+                synchronized (TelePhone.class) {
+                    if (player != null) {
+                        player.play(voice);
+                    }else {
+                        return;
+                    }
+                }
+            }
         }
         if(mListener != null){
            mListener.showDelay(mDelayTime);
@@ -106,7 +120,6 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         Log.d(TAG, "录音数据" + recordData.length);
         Connector connector = Connector.getInstance();
         CacheRepository cacheRepository = CacheRepository.getInstance();
-        byte[] buf;
         if(System.currentTimeMillis() - mPlayTime >= 10 * 1000){
             //掉线了
             showTip("对方已经掉线");
@@ -115,24 +128,65 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             }
             stop();
         }
-        if (cacheRepository.isP2PConnectSuccess()) {
-            buf = MessageManager.udpData(true, MessageManager.TYPE_VOICE, MessageManager.TAG_VOICE, recordData);
-            if (buf != null) {
-                connector.sendMessage(cacheRepository.getP2PIp(), cacheRepository.getP2PPort(), buf);
+        if(voiceBuf.remaining() == recordData.length){
+            voiceBuf.put(recordData);
+            byte[] buf;
+            if (cacheRepository.isP2PConnectSuccess()) {
+                buf = MessageManager.udpData(true, MessageManager.TYPE_VOICE, MessageManager.TAG_VOICE, voiceBuf.array());
+                if (buf != null) {
+                    long startTime = System.currentTimeMillis();
+                    connector.sendMessage(cacheRepository.getP2PIp(), cacheRepository.getP2PPort(), buf);
+                    Log.d(TAG, "UDP 数据发送时间："+String.valueOf(System.currentTimeMillis() - startTime)+", 数据长度："+buf.length );
+                } else {
+                    Log.d(TAG, "语音数据打包失败");
+                }
             } else {
-                Log.d(TAG, "语音数据打包失败");
+                buf = MessageManager.udpServerTranf(true, cacheRepository.getDeviceId(),
+                        cacheRepository.getTalkWith(),
+                        MessageManager.TYPE_TRANF,
+                        MessageManager.TAG_VOICE,
+                        voiceBuf.array());
+                if (buf != null) {
+                    connector.afxSendMessage(cacheRepository.getServerIp(), cacheRepository.getServerUdpPort(), buf);
+                } else {
+                    Log.d(TAG, "语音数据打包失败");
+                }
             }
-        } else {
-            buf = MessageManager.udpServerTranf(true, cacheRepository.getDeviceId(),
-                    cacheRepository.getTalkWith(),
-                    MessageManager.TYPE_TRANF,
-                    MessageManager.TAG_VOICE,
-                    recordData);
-            if (buf != null) {
-                connector.afxSendMessage(cacheRepository.getServerIp(), cacheRepository.getServerUdpPort(), buf);
+
+            voiceBuf.position(0);
+        }else if(voiceBuf.remaining() < recordData.length){
+            int pos = voiceBuf.position();
+            byte[] voice = new byte[pos];
+            voiceBuf.position(0);
+            voiceBuf.get(voice);
+            byte[] buf;
+            if (cacheRepository.isP2PConnectSuccess()) {
+                buf = MessageManager.udpData(true, MessageManager.TYPE_VOICE, MessageManager.TAG_VOICE, voice);
+                if (buf != null) {
+                    long startTime = System.currentTimeMillis();
+                    connector.sendMessage(cacheRepository.getP2PIp(), cacheRepository.getP2PPort(), buf);
+                    Log.d(TAG, "UDP 数据发送时间："+String.valueOf(System.currentTimeMillis() - startTime)+", 数据长度："+buf.length );
+                } else {
+                    Log.d(TAG, "语音数据打包失败");
+                }
             } else {
-                Log.d(TAG, "语音数据打包失败");
+                buf = MessageManager.udpServerTranf(true, cacheRepository.getDeviceId(),
+                        cacheRepository.getTalkWith(),
+                        MessageManager.TYPE_TRANF,
+                        MessageManager.TAG_VOICE,
+                        voice);
+                if (buf != null) {
+
+                    connector.afxSendMessage(cacheRepository.getServerIp(), cacheRepository.getServerUdpPort(), buf);
+
+                } else {
+                    Log.d(TAG, "语音数据打包失败");
+                }
             }
+            voiceBuf.position(0);
+            voiceBuf.put(recordData);
+        }else {
+            voiceBuf.put(recordData);
         }
       //  buf = null;//手动释放，数据量太大了
     }
@@ -285,6 +339,7 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
                 player = null;
             }
             setStatus(Status.LEISURE);
+            mDelayTime = 0;
             showLog("停止通话");
             CacheRepository.getInstance().setTalkWithDevice(null);
             CacheRepository.getInstance().setP2PConnectSuccess(false);

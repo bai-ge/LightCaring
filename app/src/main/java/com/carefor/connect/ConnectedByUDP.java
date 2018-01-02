@@ -2,17 +2,14 @@ package com.carefor.connect;
 
 import android.util.Log;
 
-import com.carefor.data.entity.MessageData;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class ConnectedByUDP {
@@ -33,6 +30,8 @@ public class ConnectedByUDP {
 
     private OnUDPConnectListener mListener = null;
 
+    private static ExecutorService fixedThreadPool = null;
+
     public ConnectedByUDP() {
         try {
             mSocket = new DatagramSocket();
@@ -40,6 +39,7 @@ public class ConnectedByUDP {
             Log.d(TAG, "UDP监听端口:" + localPort + "成功");
             mIsWork = true;
             mIsRuning = false;
+            fixedThreadPool = Executors.newFixedThreadPool(8);//创建最多能并发运行5个线程的线程池
         } catch (SocketException e) {
             Log.d(TAG, "UDP监听端口:" + localPort + "失败");
             mIsWork = false;
@@ -83,9 +83,6 @@ public class ConnectedByUDP {
                     DatagramPacket packet = new DatagramPacket(new byte[DATA_LEN], DATA_LEN);
                     try {
                         mSocket.receive(packet);
-                        if (mListener != null && packet.getLength() > 0) {
-                            mListener.receiveMessage(packet);
-                        }
                         if (packet.getLength() >= 4) {
                            if(mListener != null){
                                mListener.receiveMessage(packet);

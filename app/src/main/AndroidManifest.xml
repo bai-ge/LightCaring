@@ -27,12 +27,19 @@
     <!--如需使用人脸识别，还要添加：摄相头权限，拍照需要用到 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <application
+        android:name="com.carefor.LocationApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <!-- AK鉴权 -->
+        <!-- meta-data需要写在application中 -->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="LBHQT4cBxNpLYdr179xKNzjVXsXuCwlv" />  <!-- http://lbsyun.baidu.com/apiconsole/key -->
+
         <activity android:name="com.carefor.mainui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -69,6 +76,7 @@
         <activity android:name="com.carefor.membermanage.AddMemberActivity" />
         <activity android:name="com.carefor.about.AboutActivity" />
         <activity android:name="com.carefor.search.SearchActivity"/>
+        <activity android:name="com.carefor.location.LocationActivity"/>
         <service android:name="com.carefor.connect.HeartBeatService"/>
 
     </application>
