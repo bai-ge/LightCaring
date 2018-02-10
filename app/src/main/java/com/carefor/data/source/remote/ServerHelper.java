@@ -9,7 +9,7 @@ import com.carefor.data.entity.User;
 
 public interface ServerHelper {
     interface ServerCallBack{
-        void timeout(); //连不上网，或迟迟得不到相应
+        void timeout(); //连不上网，或迟迟得不到响应
         void response(String json);
         void error(Exception e); //运行出错
     }

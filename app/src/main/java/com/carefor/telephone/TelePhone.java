@@ -207,6 +207,8 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         byte[] buf = MessageManager.udpData(MessageManager.TYPE_CHECK, MessageManager.TAG_DEVICE_ID, cacheRepository.getDeviceId().getBytes());
         if (buf != null) {
             connector.sendMessage(cacheRepository.getServerIp(), cacheRepository.getServerUdpPort(), buf);
+            //TODO 检测NAT类型
+            connector.sendMessage("120.78.148.180", 12059, buf);
             showLog("UDP 检查网络状态");
         }else {
             showLog("UDP 检查网络数据包发送失败");
@@ -293,14 +295,14 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     public void onHangUp(BaseCallBack callBack) {
         checkNotNull(callBack);
         stop();
-        Connector.getInstance().sendMessage(MessageManager.onHangUp(mTalkWith));
+        Connector.getInstance().afxSendMessage(MessageManager.onHangUp(mTalkWith));
     }
 
     @Override
     public void onPickUp(BaseCallBack callBack) {
         checkNotNull(callBack);
         canTalk();
-        Connector.getInstance().sendMessage(MessageManager.onPickUp(mTalkWith));
+        Connector.getInstance().afxSendMessage(MessageManager.onPickUp(mTalkWith));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.carefor.telephone;
 
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +24,7 @@ import com.carefor.util.ActivityUtils;
 public class PhoneActivity extends BaseActivity {
     private Toast mToast;
 
+    //屏幕控制
     private PowerManager.WakeLock mWakelock;
 
     @Override
@@ -37,8 +40,6 @@ public class PhoneActivity extends BaseActivity {
         setContentView(R.layout.act_common);
         mToast = Toast.makeText(this,"",Toast.LENGTH_SHORT);
 
-
-
         PhoneFragment phoneFragment =
                 (PhoneFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
         if (phoneFragment == null) {
@@ -48,13 +49,14 @@ public class PhoneActivity extends BaseActivity {
                     getSupportFragmentManager(), phoneFragment, R.id.contentFrame);
         }
         PhonePresenter presenter = new PhonePresenter(Repository.getInstance(LocalRepository.getInstance(getApplicationContext())), phoneFragment);
+
+        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        mWakelock = pm.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.SCREEN_DIM_WAKE_LOCK, "Telephone");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock mWakelock = pm.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.SCREEN_DIM_WAKE_LOCK, "Telephone");
         mWakelock.acquire();
     }
 
@@ -64,6 +66,5 @@ public class PhoneActivity extends BaseActivity {
         if(mWakelock != null){
             mWakelock.release();
         }
-
     }
 }

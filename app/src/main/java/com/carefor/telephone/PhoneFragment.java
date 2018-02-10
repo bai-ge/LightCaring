@@ -1,9 +1,17 @@
 package com.carefor.telephone;
 
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +28,13 @@ import com.carefor.view.CircleImageView;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
 /**
  * Created by baige on 2017/10/29.
  */
 
-public class PhoneFragment extends Fragment implements PhoneContract.View {
+public class PhoneFragment extends Fragment implements PhoneContract.View , SensorEventListener {
+    private final static String TAG = PhoneFragment.class.getCanonicalName();
     private PhoneContract.Presenter mPresenter;
     private Handler mHandler;
     private Toast mToast;
@@ -37,11 +47,26 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
     private EditText mEditLog;
     private Button mBtnHangUp;
     private Button mBtnPickUp;
+
+
+    private Button mBtnSilence;
+    private Button mBtnRecord;
+    private Button mBtnLoudspeaker;
     private SimpleDateFormat mSimpleDateFormat;
+
+    //距离感应器
+    private SensorManager mSensorManager;
+
+    private Sensor mSensor;
+
+
+
 
     @Override
     public void onResume() {
         super.onResume();
+
+        mSensorManager.registerListener(this , mSensor, SensorManager.SENSOR_DELAY_NORMAL);
         mPresenter.start();
     }
 
@@ -51,12 +76,25 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
         mHandler = new Handler();
         mToast = Toast.makeText(getContext(), "", Toast.LENGTH_SHORT);
         mSimpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+
+
+       // mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Telephone");
+
+
+        mSensorManager = (SensorManager)getContext().getSystemService(Context.SENSOR_SERVICE);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_phone, container, false);
+        initView(root);
+        return root;
+    }
+
+    private void initView(View root) {
         mTextDelayTime = (TextView) root.findViewById(R.id.network_speed);
         mImg = (CircleImageView) root.findViewById(R.id.user_img);
         mTextUserName = (TextView) root.findViewById(R.id.user_name);
@@ -65,6 +103,18 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
         mEditLog = (EditText) root.findViewById(R.id.log);
         mBtnHangUp = (Button) root.findViewById(R.id.btn_hang_up);
         mBtnPickUp = (Button) root.findViewById(R.id.btn_pick_up);
+
+        mBtnSilence = (Button) root.findViewById(R.id.btn_silence);
+        mBtnRecord = (Button) root.findViewById(R.id.btn_record);
+        mBtnLoudspeaker = (Button) root.findViewById(R.id.btn_loudspeaker);
+
+        mBtnLoudspeaker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeAudioMode();
+            }
+        });
+
         mBtnHangUp.setOnClickListener(new View.OnClickListener() {//挂断电话
             @Override
             public void onClick(View v) {
@@ -78,7 +128,8 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
                 mPresenter.onPickUp();
             }
         });
-        return root;
+
+
     }
 
     @Override
@@ -91,8 +142,61 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
     }
 
 
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        float range = event.values[0];
 
+        /*
+        PhoneFragment: event.values[0] =5.0, [1] =374.0, [2] =0.0
+        PhoneFragment: range =5.0,mSensor.getMaximumRange()= 30000.0
+        * */
+        Log.v(TAG, "event.values[0] ="+event.values[0]+", [1] ="+event.values[1]+", [2] ="+event.values[2]);
+        Log.v(TAG, "range =" + range+",mSensor.getMaximumRange()= "+mSensor.getMaximumRange());
+        if (range == 0) {
+            showTip("息屏");
+            Log.v(TAG, "息屏");
+        } else {
+            showTip("正常");
+            Log.v(TAG, "正常");
+        }
+    }
 
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        Log.v(TAG, "accuracy = "+accuracy);
+    }
+
+    /**
+     * 设置语音播放的模式
+     *
+     * @param ctx
+     * @param mode
+     */
+    public void setAudioMode(Context ctx, int mode) {
+        if (mode != AudioManager.MODE_NORMAL && mode != AudioManager.MODE_IN_COMMUNICATION) {
+            return;
+        }
+        AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+        if (mode == AudioManager.MODE_NORMAL) {
+            audioManager.setSpeakerphoneOn(true);//打开扬声器
+        } else if (mode == AudioManager.MODE_IN_COMMUNICATION) {
+            audioManager.setSpeakerphoneOn(false);//关闭扬声器
+        }
+        audioManager.setMode(mode);
+    }
+
+    private void changeAudioMode() {
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        int mode = audioManager.getMode();
+        if (mode == AudioManager.MODE_NORMAL) {
+            audioManager.setSpeakerphoneOn(false);//关闭扬声器
+            showTip("打开听筒");
+        } else if (mode == AudioManager.MODE_IN_COMMUNICATION) {
+            audioManager.setSpeakerphoneOn(true);//打开扬声器
+            showTip("打开扬声器");
+        }
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION - mode);
+    }
 
     @Override
     public void showAddress(final String address) {
@@ -150,7 +254,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-              mTextDelayTime.setText(String.valueOf(delay)+"ms");
+                mTextDelayTime.setText(String.valueOf(delay) + "ms");
             }
         });
     }
@@ -176,7 +280,15 @@ public class PhoneFragment extends Fragment implements PhoneContract.View {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(this);
+
+    }
+
+    @Override
     public void close() {
+        setAudioMode(getContext(), AudioManager.MODE_NORMAL);
         Connector.getInstance().unRegistConnectorListener("presenter");
         getActivity().finish();
     }

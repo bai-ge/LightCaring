@@ -24,7 +24,7 @@
             android:hint="用户名/手机号"
             android:paddingLeft="5dp"
             android:textColorHint="#b3b3b3"
-            android:textSize="18sp" />
+            android:textSize="18sp"/>
 
         <Button
             android:id="@+id/btn_search"

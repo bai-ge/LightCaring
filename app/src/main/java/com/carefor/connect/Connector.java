@@ -152,6 +152,16 @@ public class Connector {
         fixedThreadPool.submit(mConnectRunnable);
     }
 
+    public void afxSendMessage(final String msg){
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    sendMessage(msg);
+                }
+            });
+        }
+    }
     public void sendMessage(String msg) {
         if (connectedByTCP == null || !connectedByTCP.isWork()) {
             mConnectRunnable.run();
