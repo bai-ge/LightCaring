@@ -6,18 +6,40 @@
     android:background="@color/black"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/txt_latlng"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/color_white"/>
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/txt_latlng"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/color_white"/>
+            <TextView
+                android:id="@+id/txt_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/color_white"
+                />
 
-    <TextView
-        android:id="@+id/txt_location"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/color_white"
-        />
+        </LinearLayout>
+        <Button
+            android:id="@+id/btn_location"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_gps"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/fab_margin"/>
+    </RelativeLayout>
+
+
+
+
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -28,14 +50,31 @@
             android:layout_height="match_parent">
         </com.baidu.mapapi.map.MapView>
 
-        <Button
-            android:id="@+id/btn_model"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-            android:layout_marginBottom="40dip"
-            android:layout_marginLeft="16dp"/>
+            android:layout_marginBottom="25dp"
+            android:layout_marginLeft="16dp">
+
+            <Button
+                android:id="@+id/btn_model"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/btn_location"/>
+            <View
+                android:id="@+id/scale_view"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center"
+                android:layout_marginLeft="5dp">
+
+            </View>
+        </LinearLayout>
+
+
+
 
     </RelativeLayout>
 

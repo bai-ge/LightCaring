@@ -11,22 +11,22 @@ import com.carefor.location.LocationService;
 
 /**
  * 主Application，所有百度定位SDK的接口说明请参考线上文档：http://developer.baidu.com/map/loc_refer/index.html
- *
+ * <p>
  * 百度定位SDK官方网站：http://developer.baidu.com/map/index.php?title=android-locsdk
- * 
+ * <p>
  * 直接拷贝com.baidu.location.service包到自己的工程下，简单配置即可获取定位结果，也可以根据demo内容自行封装
  */
 public class BaseApplication extends Application {
     private final static String TAG = BaseApplication.class.getCanonicalName();
 
-    public LocationService locationService;
     public Vibrator mVibrator;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        locationService = new LocationService(getApplicationContext());
-        mVibrator =(Vibrator)getApplicationContext().getSystemService(Service.VIBRATOR_SERVICE);
+        LocationService locationService = LocationService.getInstance(getApplicationContext());
+
+        mVibrator = (Vibrator) getApplicationContext().getSystemService(Service.VIBRATOR_SERVICE);
 
         // 在使用 SDK 各组间之前初始化 context 信息，传入 ApplicationContext
         SDKInitializer.initialize(this);

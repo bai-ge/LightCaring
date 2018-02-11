@@ -65,4 +65,5 @@
     </array>
     <item name="title_bg" type="color" >#FF2c5aa9</item>
     <color name="about_content">#f9cf72</color>
+    <color name="blue">#2c73dd</color>
 </resources>

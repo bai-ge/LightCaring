@@ -1,11 +1,14 @@
 package com.carefor.mainui;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.design.widget.NavigationView;
@@ -29,6 +32,9 @@ import com.carefor.login.LoginActivity;
 import com.carefor.membermanage.MemberManageActivity;
 import com.carefor.setting.SettingActivity;
 import com.carefor.util.ActivityUtils;
+import com.carefor.util.Tools;
+
+import java.util.ArrayList;
 
 import cn.jpush.android.api.JPushInterface;
 
@@ -44,6 +50,10 @@ public class MainActivity extends BaseActivity {
     private Toast mToast;
 
     private ConnectService.ConnectBinder mBinder = null;
+
+    private final int SDK_PERMISSION_REQUEST = 127;
+
+    private String permissionInfo = "";
 
 
 
@@ -110,9 +120,89 @@ public class MainActivity extends BaseActivity {
         MainPresenter mainPresenter = new MainPresenter(repository, mainFragment);
         mainPresenter.setOnPresenterListener(mOnPresenterListener);
 
+        getPersimmions();
 
         Log.d("guide_page", "启动主页面");
     }
+    @TargetApi(23)
+    private void getPersimmions() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //showTip("开始申请权限");
+            ArrayList<String> permissions = new ArrayList<String>();
+            /***
+             * 定位权限为必须权限，用户如果禁止，则每次进入都会申请
+             */
+            // 定位精确位置
+            if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+            if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            }
+
+            // 读写权限，必须要
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+
+            // 读取电话状态权限，必须要
+            if (checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(android.Manifest.permission.READ_PHONE_STATE);
+            }
+//            // 创建与删除文件权限，必须
+//            if (checkSelfPermission(Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS)  != PackageManager.PERMISSION_GRANTED) {
+//                permissions.add(Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS);
+//            }
+            //访问网络，必须
+            if (checkSelfPermission(android.Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(android.Manifest.permission.INTERNET);
+            }
+
+
+            // 创建与删除文件权限，非必须
+            if (addPermission(permissions, android.Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS)) {
+                permissionInfo += "Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS Deny \n";
+            }
+//            //访问网络，非必须
+//            if (addPermission(permissions, Manifest.permission.INTERNET)) {
+//                permissionInfo += "Manifest.permission.INTERNET Deny \n";
+//            }
+
+            if (permissions.size() > 0) {
+                //showTip("权限"+permissionInfo);
+                requestPermissions(permissions.toArray(new String[permissions.size()]), SDK_PERMISSION_REQUEST);
+            }
+            if(!Tools.isEmpty(permissionInfo)){
+                showTip(permissionInfo);
+            }
+
+        }
+
+    }
+
+    @TargetApi(23)
+    private boolean addPermission(ArrayList<String> permissionsList, String permission) {
+        if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) { // 如果应用没有获得对应权限,则添加到列表中,准备批量申请
+            if (shouldShowRequestPermissionRationale(permission)) {//判断该权限是不是用户禁止过
+                return true;
+            } else {
+                permissionsList.add(permission);
+                return false;
+            }
+
+        } else {
+            return true;
+        }
+    }
+
+    @TargetApi(23)
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        // TODO Auto-generated method stub
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
 
     @Override
     protected void onResume() {
