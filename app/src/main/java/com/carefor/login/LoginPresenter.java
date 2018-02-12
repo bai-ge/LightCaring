@@ -2,9 +2,9 @@ package com.carefor.login;
 
 import android.util.Log;
 
+import com.carefor.callback.SeniorCallBack;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
-import com.carefor.data.source.ServerAPI;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.guidepage.GuidepageActivity;
 import com.carefor.register.RegisterActivity;
@@ -64,7 +64,7 @@ public class LoginPresenter implements LoginContract.Presenter {
         user.setPsw(psw);
         user.setDeviceId(CacheRepository.getInstance().getDeviceId());
 
-        mRepository.afxLogin(user, new ServerAPI.BaseCallBackAdapter() {
+        mRepository.asynLogin(user, new SeniorCallBack() {
             @Override
             public void success() {
                 mFragment.showTip("用户\""+name+"\"登录成功");
@@ -74,7 +74,7 @@ public class LoginPresenter implements LoginContract.Presenter {
                     mListener.closeActivity();
                 }
                 // 从远程服务器加载个人信息
-                mRepository.afxQueryByName(name, new ServerAPI.BaseCallBackAdapter(){
+                mRepository.asynQueryByName(name, new SeniorCallBack(){
                     @Override
                     public void loadUsers(List<User> list) {
                         super.loadUsers(list);
@@ -103,7 +103,7 @@ public class LoginPresenter implements LoginContract.Presenter {
             }
 
             @Override
-            public void notfind() {
+            public void notFind() {
                 mFragment.showTip("用户\"" + name + "\"不存在");
             }
 

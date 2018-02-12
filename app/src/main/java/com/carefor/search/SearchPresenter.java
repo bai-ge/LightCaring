@@ -2,9 +2,9 @@ package com.carefor.search;
 
 import android.util.Log;
 
+import com.carefor.callback.SeniorCallBack;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
-import com.carefor.data.source.ServerAPI;
 import com.carefor.data.source.cache.CacheRepository;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class SearchPresenter implements SearchContract.Presenter {
     public void search(String word) {
         //是否是电话号码
         if(word.matches("^[0-9]+$")){
-            mRepository.afxQueryByTel(word, new ServerAPI.BaseCallBackAdapter() {
+            mRepository.asynQueryByTel(word, new SeniorCallBack() {
                 @Override
                 public void onResponse() {
                     super.onResponse();
@@ -58,7 +58,7 @@ public class SearchPresenter implements SearchContract.Presenter {
             });
             Log.d("RemoteRepository","以电话搜索");
         }else{
-            mRepository.afxQueryByName(word, new ServerAPI.BaseCallBackAdapter(){
+            mRepository.asynQueryByName(word, new SeniorCallBack(){
                 @Override
                 public void onResponse() {
                     super.onResponse();
@@ -84,7 +84,7 @@ public class SearchPresenter implements SearchContract.Presenter {
     public void relate(final User user) {
         User own = CacheRepository.getInstance().who();
         if(own.getType() == 1){//有监护他人的权利
-            mRepository.afxRelative(own, user, new ServerAPI.BaseCallBackAdapter(){
+            mRepository.asynRelative(own, user, new SeniorCallBack(){
                 @Override
                 public void success() {
                     super.success();
@@ -108,7 +108,7 @@ public class SearchPresenter implements SearchContract.Presenter {
                 mFragment.showTip("您和他(她)必须有一人充当监护人");
             }
             if(user.getType() == 1){
-                mRepository.afxRelative(user, own, new ServerAPI.BaseCallBackAdapter(){
+                mRepository.asynRelative(user, own, new SeniorCallBack(){
                     @Override
                     public void success() {
                         super.success();

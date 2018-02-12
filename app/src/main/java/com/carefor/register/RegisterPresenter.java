@@ -1,8 +1,8 @@
 package com.carefor.register;
 
+import com.carefor.callback.SeniorCallBack;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
-import com.carefor.data.source.ServerAPI;
 import com.carefor.data.source.cache.CacheRepository;
 
 
@@ -34,7 +34,7 @@ public class RegisterPresenter implements RegisterContract.Presenter {
 
     @Override
     public void getTelCode(String tel) {
-        mRepository.afxVerification(tel, new ServerAPI.BaseCallBackAdapter() {
+        mRepository.asynVerification(tel, new SeniorCallBack() {
             @Override
             public void success() {
                 mFragment.showTip("正在获取验证码……");
@@ -61,7 +61,7 @@ public class RegisterPresenter implements RegisterContract.Presenter {
     public void register(final User user, String code) {
         user.setDeviceId(CacheRepository.getInstance().getDeviceId());
         user.setType(1);
-        mRepository.afxRegister(user, code, new ServerAPI.BaseCallBackAdapter() {
+        mRepository.asynRegister(user, code, new SeniorCallBack() {
             @Override
             public void success() {
                 mFragment.showTip("用户\""+user.getName()+"\"注册成功");

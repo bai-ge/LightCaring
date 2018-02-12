@@ -8,7 +8,10 @@ public class Parm {
     public static final String USER_NAME = "username";
     public static final String NAME = "name";
     public static final String PASSWORD = "password";
-    public static final String CODE_NUM = "codeNum";
+    public static final String CODE = "code";
+    public static final String MSG = "msg";
+    public static final String DATA = "data";
+
     public static final String MEANING = "meanning";
     public static final String OBJ = "object";
     public static final String IMAGE = "image";
@@ -16,7 +19,6 @@ public class Parm {
     public static final String UID = "u_id";
     public static final String TEL = "tel";
     public static final String TELEPHONE = "telphone";
-    public static final String CODE = "code";
     public static final String TYPE = "type";
     public static final String DEVICE_ID = "device_id";
     public static final String _DEVICE_ID = "device-id";

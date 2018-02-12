@@ -3,6 +3,9 @@ package com.carefor.data.source;
 
 import android.util.Log;
 
+import com.carefor.callback.BaseCallBack;
+import com.carefor.callback.SimpleResponseBinder;
+import com.carefor.callback.UserResponseBinder;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.data.source.remote.Parm;
@@ -25,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by baige on 2017/12/21.
  */
 
-public class Repository implements DataSource, ServerAPI {
+public class Repository implements DataSource, ServerHelper {
     private final static String TAG = Repository.class.getCanonicalName();
 
     private static Repository INSTANCE = null;
@@ -38,10 +41,15 @@ public class Repository implements DataSource, ServerAPI {
 
     private static ExecutorService fixedThreadPool = null;
 
+    //根据服务器返回的 Json信息， 和特定的callback 的绑定，实现调用
+    private SimpleResponseBinder mSimpleResponseBinder;
+    private UserResponseBinder mUserResponseBinder;
 
     private Repository(LocalRepository localRepository) {
 
         fixedThreadPool = Executors.newFixedThreadPool(5);//创建最多能并发运行5个线程的线程池
+        mSimpleResponseBinder = new SimpleResponseBinder();
+        mUserResponseBinder = new UserResponseBinder();
         //TODO 新建本地和远程数据获取来源
         mLocalRepository = checkNotNull(localRepository);
         mLocalRepository = localRepository;
@@ -61,54 +69,21 @@ public class Repository implements DataSource, ServerAPI {
     }
 
 
-    public static void CallBackCode(BaseCallBack callBack, int code) {
-        switch (code) {
-            case Parm.SUCCESS_CODE:
-                callBack.success();
-                break;
-            case Parm.FAIL_CODE:
-                callBack.fail();
-                break;
-            case Parm.UNKNOWN_CODE:
-                callBack.unknown();
-                break;
-            case Parm.NOTFIND_CODE:
-                callBack.notfind();
-                break;
-            case Parm.TYPE_CONVERT_CODE:
-                callBack.typeConvert();
-                break;
-            case Parm.EXIST_CODE:
-                callBack.exist();
-                break;
-            case Parm.BLANK_CODE:
-                callBack.isBlank();
-                break;
-            case Parm.TIMEOUT_CODE:
-                callBack.timeout();
-                break;
-            case Parm.INVALID_CODE:
-                callBack.invalid();
-                break;
-            default:
-                callBack.unknown();
-        }
-    }
-
     @Override
     public void login(User user, final BaseCallBack callBack) {
         checkNotNull(user);
         checkNotNull(callBack);
+        Log.d(TAG, "登录："+user);
+        callBack.setResponseBinder(mSimpleResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.login(user, new CodeNumCallBack(callBack));
-            mRemoteRepository.loginMD5(user, new CodeNumCallBack(callBack));
+            mRemoteRepository.login(user, callBack);
+            mRemoteRepository.loginMD5(user, callBack);
         }
     }
 
-    @Override
-    public void afxLogin(final User user, final BaseCallBack callBack) {
+    public void asynLogin(final User user, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -124,15 +99,15 @@ public class Repository implements DataSource, ServerAPI {
         checkNotNull(user);
         checkNotNull(code);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.register(user, code, new CodeNumCallBack(callBack));
+            mRemoteRepository.register(user, code, callBack);
         }
     }
 
-    @Override
-    public void afxRegister(final User user, final String code, final BaseCallBack callBack) {
+    public void asynRegister(final User user, final String code, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -147,15 +122,15 @@ public class Repository implements DataSource, ServerAPI {
     public void verification(String tel, final BaseCallBack callBack) {
         checkNotNull(tel);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.verification(tel,  new CodeNumCallBack(callBack));
+            mRemoteRepository.verification(tel,  callBack);
         }
     }
 
-    @Override
-    public void afxVerification(final String tel, final BaseCallBack callBack) {
+    public void asynVerification(final String tel, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -167,7 +142,19 @@ public class Repository implements DataSource, ServerAPI {
     }
 
     @Override
-    public void afxQueryByName(final String name, final BaseCallBack callBack) {
+    public void queryByName(String name, final BaseCallBack callBack) {
+        checkNotNull(name);
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mUserResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.queryByName(name, callBack);
+        }
+    }
+
+
+    public void asynQueryByName(final String name, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -178,19 +165,20 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void queryByName(String name, final BaseCallBack callBack) {
-        checkNotNull(name);
+    public void getAllGuardiansOf(int id, final BaseCallBack callBack) {
+        checkNotNull(id);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mUserResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.queryByName(name, new LoadUsersCallBack(callBack));
+            mRemoteRepository.getAllGuardiansOf(id, callBack);
         }
     }
 
-    @Override
-    public void afxGetAllGuardiansOf(final int id, final BaseCallBack callBack) {
+    public void asynGetAllGuardiansOf(final int id, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -201,19 +189,20 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void getAllGuardiansOf(int id, final BaseCallBack callBack) {
-        checkNotNull(id);
+    public void queryByTel(String tel, final BaseCallBack callBack) {
+        checkNotNull(tel);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mUserResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.getAllGuardiansOf(id, new LoadUsersCallBack(callBack));
+            mRemoteRepository.queryByTel(tel, callBack);
         }
     }
 
-    @Override
-    public void afxQueryByTel(final String tel, final BaseCallBack callBack) {
+    public void asynQueryByTel(final String tel, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -224,19 +213,21 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void queryByTel(String tel, final BaseCallBack callBack) {
-        checkNotNull(tel);
+    public void getAllPupillusOf(int id, BaseCallBack callBack) {
+        checkNotNull(id);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mUserResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.queryByTel(tel, new LoadUsersCallBack(callBack));
+            mRemoteRepository.getAllPupillusOf(id, callBack);
         }
     }
 
-    @Override
-    public void afxGetAllPupillusOf(final int id, final BaseCallBack callBack) {
+
+    public void asynGetAllPupillusOf(final int id, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -247,19 +238,22 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void getAllPupillusOf(int id, BaseCallBack callBack) {
-        checkNotNull(id);
+    public void relative(User guardian, User pupils, BaseCallBack callBack) {
+        checkNotNull(guardian);
+        checkNotNull(pupils);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.getAllPupillusOf(id, new LoadUsersCallBack(callBack));
+            mRemoteRepository.relative(guardian, pupils, callBack);
         }
     }
 
-    @Override
-    public void afxRelative(final User guardian, final User pupils, final BaseCallBack callBack) {
+
+    public void asynRelative(final User guardian, final User pupils, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -270,20 +264,21 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void relative(User guardian, User pupils, BaseCallBack callBack) {
+    public void unRelative(User guardian, User pupils, BaseCallBack callBack) {
         checkNotNull(guardian);
         checkNotNull(pupils);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.relative(guardian, pupils, new CodeNumCallBack(callBack));
+            mRemoteRepository.unRelative(guardian, pupils,  callBack);
         }
     }
 
-    @Override
-    public void afxUnRelative(final User guardian, final User pupils, final BaseCallBack callBack) {
+    public void asynUnRelative(final User guardian, final User pupils, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -294,20 +289,20 @@ public class Repository implements DataSource, ServerAPI {
         }
     }
 
+
     @Override
-    public void unRelative(User guardian, User pupils, BaseCallBack callBack) {
-        checkNotNull(guardian);
-        checkNotNull(pupils);
+    public void query(int id, BaseCallBack callBack) {
+        checkNotNull(id);
         checkNotNull(callBack);
+        callBack.setResponseBinder(mUserResponseBinder);
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.unRelative(guardian, pupils, new CodeNumCallBack(callBack));
+            mRemoteRepository.query(id, callBack);
         }
     }
 
-    @Override
-    public void afxQuery(final int id, final BaseCallBack callBack) {
+    public void asynQuery(final int id, final BaseCallBack callBack) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -319,16 +314,35 @@ public class Repository implements DataSource, ServerAPI {
     }
 
     @Override
-    public void query(int id, BaseCallBack callBack) {
-        checkNotNull(id);
-        checkNotNull(callBack);
-        if (mRemoteRepository == null) {
-            callBack.fail();
-        } else {
-            mRemoteRepository.query(id, new GetAUserCallBack(callBack));
-        }
+    public void loginMD5(User user, BaseCallBack callBack) {
+
     }
 
+    @Override
+    public void queryByUser(User user, BaseCallBack callBack) {
+
+    }
+
+    @Override
+    public void getAllUsers(BaseCallBack callBack) {
+
+    }
+
+    @Override
+    public void assignment(int gid, int bgid, int otherid, BaseCallBack callBack) {
+
+    }
+
+    @Override
+    public void askLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
+
+    }
+
+    @Override
+    public void replyLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
+
+    }
+    /*
     class SimpleServerCallBack implements ServerHelper.ServerCallBack{
         ServerAPI.BaseCallBack mCallBack;
 
@@ -547,4 +561,5 @@ public class Repository implements DataSource, ServerAPI {
             mCallBack.fail();
         }
     }
+    */
 }

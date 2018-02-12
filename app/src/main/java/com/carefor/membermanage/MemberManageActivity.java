@@ -15,10 +15,9 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.carefor.BaseActivity;
-import com.carefor.connect.MessageManager;
+import com.carefor.callback.SeniorCallBack;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
-import com.carefor.data.source.ServerAPI;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.mainui.R;
@@ -142,7 +141,7 @@ public class MemberManageActivity extends BaseActivity {
         CacheRepository cacheRepository = CacheRepository.getInstance();
         final User user = cacheRepository.who();
         mUserAdapter.clear();//清除旧数据
-        mRepository.afxGetAllPupillusOf(user.getUid(), new ServerAPI.BaseCallBackAdapter() {
+        mRepository.asynGetAllPupillusOf(user.getUid(), new SeniorCallBack() {
             @Override
             public void onResponse() {
                 super.onResponse();
@@ -162,7 +161,7 @@ public class MemberManageActivity extends BaseActivity {
                 showTip("查询被监护人" + text);
             }
         });
-        mRepository.afxGetAllGuardiansOf(user.getUid(), new ServerAPI.BaseCallBackAdapter() {
+        mRepository.asynGetAllGuardiansOf(user.getUid(), new SeniorCallBack() {
             @Override
             public void onResponse() {
                 super.onResponse();
@@ -200,7 +199,7 @@ public class MemberManageActivity extends BaseActivity {
             Log.d(TAG, "紧急联系人" + user);
             showTip("点击" + user.getName());
             //把该用户设为紧急联系人
-            mRepository.afxQuery(user.getUid(), new ServerAPI.BaseCallBackAdapter() {
+            mRepository.asynQuery(user.getUid(), new SeniorCallBack() {
                 @Override
                 public void loadAUser(User u) {
                     super.loadAUser(u);

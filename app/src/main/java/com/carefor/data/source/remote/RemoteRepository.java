@@ -2,6 +2,7 @@ package com.carefor.data.source.remote;
 
 import android.util.Log;
 
+import com.carefor.callback.BaseCallBack;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.DataSource;
 import com.carefor.data.source.local.LocalRepository;
@@ -49,7 +50,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
         return INSTANCE;
     }
 
-    private void HttpURLPost(String url, String json, ServerCallBack callBack) {
+    private void HttpURLPost(String url, String json, PrimaryCallBack callBack) {
         checkNotNull(url);
         checkNotNull(json);
         checkNotNull(callBack);
@@ -57,6 +58,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
         OutputStreamWriter out = null;
         BufferedReader reader = null;
         StringBuffer response = new StringBuffer();
+        Log.d(TAG, url+" "+json);
         try {
             URL httpUrl = new URL(url);
             connection = (HttpURLConnection) httpUrl.openConnection();
@@ -73,7 +75,6 @@ public class RemoteRepository implements DataSource, ServerHelper {
             //POST请求
             out = new OutputStreamWriter(connection.getOutputStream());
             out.write(json);
-            Log.d(TAG, url +" "+ json);
             out.flush();
 
             //读取相应
@@ -103,12 +104,13 @@ public class RemoteRepository implements DataSource, ServerHelper {
         }
     }
 
-    private void HttpURLGet(String url, ServerCallBack callBack) {
+    private void HttpURLGet(String url, PrimaryCallBack callBack) {
         checkNotNull(url);
         checkNotNull(callBack);
         HttpURLConnection connection;
         BufferedReader reader = null;
         StringBuffer response = new StringBuffer();
+        Log.d(TAG, url);
         try {
             URL httpUrl = new URL(url);
             connection = (HttpURLConnection) httpUrl.openConnection();
@@ -121,7 +123,6 @@ public class RemoteRepository implements DataSource, ServerHelper {
             //connection.setDoInput(true);设置这句话会变成POST
             //connection.setDoOutput(true);
             connection.connect();
-            Log.d(TAG, url );
             //读取相应
             reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String lines;
@@ -148,7 +149,8 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void login(User user, ServerCallBack callBack) {
+    public void login(User user, BaseCallBack callBack) {
+        Log.d(TAG, "登录："+user);
         String url = serverAddress + "/api/user/login";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -163,7 +165,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void loginMD5(User user, ServerCallBack callBack) {
+    public void loginMD5(User user, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/login";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -178,7 +180,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void register(User user, String code, ServerCallBack callBack) {
+    public void register(User user, String code, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/register";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -198,7 +200,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
 
     //获取验证码
     @Override
-    public void verification(String tel, ServerCallBack callBack) {
+    public void verification(String tel, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/verification";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -211,13 +213,13 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void query(int id, ServerCallBack callBack) {
+    public void query(int id, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/"+id;
         HttpURLGet(url, callBack);
     }
 
     @Override
-    public void queryByTel(String tel, ServerCallBack callBack) {
+    public void queryByTel(String tel, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/search";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -230,7 +232,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void queryByName(String name, ServerCallBack callBack) {
+    public void queryByName(String name, BaseCallBack callBack) {
         String url = serverAddress + "/api/user/search";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -243,18 +245,18 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void queryByUser(User user, ServerCallBack callBack) {
+    public void queryByUser(User user, BaseCallBack callBack) {
 
     }
 
     @Override
-    public void getAllUsers(ServerCallBack callBack) {
+    public void getAllUsers(BaseCallBack callBack) {
         String url = serverAddress + "/api/user/all";
         HttpURLGet(url, callBack);
     }
 
     @Override
-    public void relative(User guardian, User pupils, ServerCallBack callBack) {
+    public void relative(User guardian, User pupils, BaseCallBack callBack) {
         String url = serverAddress + "/api/contacts/build";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -269,7 +271,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void unRelative(User guardian, User pupils, ServerCallBack callBack) {
+    public void unRelative(User guardian, User pupils, BaseCallBack callBack) {
         String url = serverAddress + "/api/contacts/unbinding";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -288,7 +290,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
      * @param callBack 返回所有监护人
      */
     @Override
-    public void getAllGuardiansOf(int pid, ServerCallBack callBack) {
+    public void getAllGuardiansOf(int pid, BaseCallBack callBack) {
         String url = serverAddress + "/api/contacts/g";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -305,7 +307,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
      * @param callBack 返回所有被监护人
      */
     @Override
-    public void getAllPupillusOf(int gid, ServerCallBack callBack) {
+    public void getAllPupillusOf(int gid, BaseCallBack callBack) {
         String url = serverAddress + "/api/contacts/ug";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -318,7 +320,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void assignment(int gid, int bgid, int otherid, ServerCallBack callBack) {
+    public void assignment(int gid, int bgid, int otherid, BaseCallBack callBack) {
         String url = serverAddress + "/api/contacts/assignment";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -333,7 +335,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void askLocation(int code, String description, int sendUid, int receUid, String content, ServerCallBack callBack) {
+    public void askLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
         String url = serverAddress + "/api/services/location/ug";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -349,7 +351,7 @@ public class RemoteRepository implements DataSource, ServerHelper {
     }
 
     @Override
-    public void replyLocation(int code, String description, int sendUid, int receUid, String content, ServerCallBack callBack) {
+    public void replyLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
         String url = serverAddress + "/api/services/location/g";
         JSONObject jsonObject = new JSONObject();
         try {

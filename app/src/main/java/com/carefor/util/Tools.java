@@ -2,7 +2,6 @@ package com.carefor.util;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
 
 import java.security.MessageDigest;
 

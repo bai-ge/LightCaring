@@ -1,6 +1,9 @@
 package com.carefor.data.source.remote;
 
+import com.carefor.callback.BaseCallBack;
 import com.carefor.data.entity.User;
+
+import java.util.List;
 
 
 /**
@@ -8,37 +11,74 @@ import com.carefor.data.entity.User;
  */
 
 public interface ServerHelper {
-    interface ServerCallBack{
+
+   /*基本接口部分*/
+    interface PrimaryCallBack{
         void timeout(); //连不上网，或迟迟得不到响应
         void response(String json);
         void error(Exception e); //运行出错
     }
 
-    void login(User user, ServerCallBack callBack);
-    void loginMD5(User user, ServerCallBack callBack);
+    /*根据json解析后，调用的返回码接口*/
+    interface CodeCallBack{
 
-    void register(User user, String code, ServerCallBack callBack);
-    void verification(String tel, ServerCallBack callBack);//获取验证码
+        void success();
 
-    void query(int id, ServerCallBack callBack);
-    void queryByTel(String tel, ServerCallBack callBack);
-    void queryByName(String tel, ServerCallBack callBack);
-    void queryByUser(User user, ServerCallBack callBack);
-    void getAllUsers(ServerCallBack callBack);
+        void fail();
 
-    void relative(User guardian, User pupils, ServerCallBack callBack);
+        void unknown();
 
-    void unRelative(User guardian, User pupils, ServerCallBack callBack);
+        void notFind();//未找到资源
 
-    void getAllGuardiansOf(int id, ServerCallBack callBack);
+        void typeConvert();//输入参数类型错误
 
-    void getAllPupillusOf(int id, ServerCallBack callBack);
+        void exist();//资源已经存在
 
-    void assignment(int gid, int bgid, int otherid, ServerCallBack callBack);//转让权限
+        void isBlank();//参数为空
 
-    void askLocation(int code, String description, int sendUid, int receUid, String content, ServerCallBack callBack);
+        void timeout();
 
-    void replyLocation(int code, String description, int sendUid, int receUid, String content, ServerCallBack callBack);
+        void invalid(); //无效
+    }
+
+    /*复杂的接口部分*/
+    interface ComplexCallBack{
+
+        void meaning(String text); //返回的中文解释
+
+        void onResponse();//服务器有响应，进度条应该停止
+
+        void loadUsers(List<User> list);
+
+        void loadAUser(User user);
+
+    }
+
+    void login(User user, BaseCallBack callBack);
+    void loginMD5(User user, BaseCallBack callBack);
+
+    void register(User user, String code, BaseCallBack callBack);
+    void verification(String tel, BaseCallBack callBack);//获取验证码
+
+    void query(int id, BaseCallBack callBack);
+    void queryByTel(String tel, BaseCallBack callBack);
+    void queryByName(String tel, BaseCallBack callBack);
+    void queryByUser(User user, BaseCallBack callBack);
+    void getAllUsers(BaseCallBack callBack);
+
+    void relative(User guardian, User pupils, BaseCallBack callBack);
+
+    void unRelative(User guardian, User pupils, BaseCallBack callBack);
+
+    void getAllGuardiansOf(int id, BaseCallBack callBack);
+
+    void getAllPupillusOf(int id, BaseCallBack callBack);
+
+    void assignment(int gid, int bgid, int otherid, BaseCallBack callBack);//转让权限
+
+    void askLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack);
+
+    void replyLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack);
 
     //TODO
 

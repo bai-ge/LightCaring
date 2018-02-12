@@ -1,5 +1,6 @@
 package com.carefor.adapter;
 
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,23 +21,36 @@ public class UserAdapter extends BaseAdapter {
     private List<User> mUsers;
     private UserItemListener mItemListener;
     private String mBtnText;
+
+    /*避免频繁刷新列表，导致被忽略刷新*/
+    private Handler mHandler;
+    private Runnable mNotifyRunnable = new Runnable() {
+        @Override
+        public void run() {
+            notifyDataSetChanged();
+        }
+    };
+
     public UserAdapter(List<User> users, UserItemListener listener, String btnText) {
         mItemListener = checkNotNull(listener);
         mBtnText = checkNotNull(btnText);
+        mHandler = new Handler();
         setList(users);
     }
+
 
     public void clear(){
         for (int i = 0; i < mUsers.size() ; i++) {
             mUsers.clear();
-            //清除的时候刷新界面导致数据写入的时候刷新界面失败
-           // notifyDataSetChanged();
+            mHandler.removeCallbacks(mNotifyRunnable);
+            mHandler.postDelayed(mNotifyRunnable, 500);
         }
     }
     public void add(User user){
         if(user != null && !mUsers.contains(user)){
             mUsers.add(user);
-            notifyDataSetChanged();
+            mHandler.removeCallbacks(mNotifyRunnable);
+            mHandler.postDelayed(mNotifyRunnable, 500);
         }
     }
     public void addUsers(List<User> list){
@@ -46,12 +60,14 @@ public class UserAdapter extends BaseAdapter {
                     mUsers.add(list.get(i));
                 }
             }
-            notifyDataSetChanged();
+            mHandler.removeCallbacks(mNotifyRunnable);
+            mHandler.postDelayed(mNotifyRunnable, 500);
         }
     }
     public void setList(List<User> users){
         mUsers = checkNotNull(users);
-        notifyDataSetChanged();
+        mHandler.removeCallbacks(mNotifyRunnable);
+        mHandler.postDelayed(mNotifyRunnable, 500);
     }
     @Override
     public int getCount() {

@@ -27,6 +27,7 @@ import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.Marker;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
@@ -34,7 +35,6 @@ import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.model.LatLng;
-import com.baidu.mapapi.model.inner.Point;
 import com.baidu.mapapi.utils.DistanceUtil;
 import com.carefor.mainui.R;
 
@@ -76,7 +76,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
     // 定位相关
     private LocationService locationService;
     private BaiduMap mBaiduMap;
-    private BitmapDescriptor mCurrentMarker;
+
 
     private SensorManager mSensorManager;
 
@@ -89,6 +89,10 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
     private float mCurrentAccracy; //精度
 
 
+    //标记
+    private BitmapDescriptor mTargetMarker = BitmapDescriptorFactory.fromResource(R.drawable.icon_gcoding);
+
+    private Marker mMarker;
 
     private Polyline mPolyline;
     private PolylineOptions mOverlayOptions;
@@ -151,6 +155,15 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             }
         });
         mBaiduMap = mMapView.getMap();
+        mBaiduMap.setOnMapDoubleClickListener(new BaiduMap.OnMapDoubleClickListener() {
+            /**
+             * 双击地图
+             */
+            public void onMapDoubleClick(LatLng point) {
+                marker(point);
+                showTip("双击");
+            }
+        });
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
 
@@ -179,7 +192,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                         mBtnLocModel.setBackgroundResource(R.drawable.btn_follow);
                         mCurrentMode = MyLocationConfiguration.LocationMode.FOLLOWING;
                         mBaiduMap.setMyLocationConfiguration(new MyLocationConfiguration(
-                                mCurrentMode, true, mCurrentMarker));
+                                mCurrentMode, true, null));
                         MapStatus.Builder builder = new MapStatus.Builder();
                         builder.overlook(0);
                         mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
@@ -189,7 +202,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                         mBtnLocModel.setBackgroundResource(R.drawable.btn_navigation);
                         mCurrentMode = MyLocationConfiguration.LocationMode.COMPASS;
                         mBaiduMap.setMyLocationConfiguration(new MyLocationConfiguration(
-                                mCurrentMode, true, mCurrentMarker));
+                                mCurrentMode, true, null));
                         break;
                     default:
                         break;
@@ -229,7 +242,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                         mBtnLocModel.setBackgroundResource(R.drawable.btn_location);
                         mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
                         mBaiduMap.setMyLocationConfiguration(new MyLocationConfiguration(
-                                mCurrentMode, true, mCurrentMarker));
+                                mCurrentMode, true, null));
                         MapStatus.Builder builder1 = new MapStatus.Builder();
                         builder1.overlook(0);
                         mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder1.build()));
@@ -290,6 +303,18 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mMapView.setScaleControlPosition(new android.graphics.Point(scaleRect.left - mapRect.left, scaleRect.top - mapRect.top));
     }
 
+    private void marker(LatLng ll){
+        if(ll == null){
+            return;
+        }
+        if(mMarker == null){
+            MarkerOptions markerOptions = new MarkerOptions().position(ll).icon(mTargetMarker);
+            mMarker = (Marker) mBaiduMap.addOverlay(markerOptions);
+        }else{
+            mMarker.setPosition(ll);
+        }
+    }
+
     @Override
     public void onPause() {
         mMapView.onPause();
@@ -328,6 +353,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             }
         });
     }
+
 
     /**
      * 定位SDK监听函数
