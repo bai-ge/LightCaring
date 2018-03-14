@@ -2,6 +2,8 @@ package com.carefor.callback;
 
 import android.util.Log;
 
+import com.carefor.data.entity.Housekeeping;
+import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
 
 import java.util.List;
@@ -111,4 +113,28 @@ public class SeniorCallBack extends BaseCallBack {
 
     }
 
+    @Override
+    public void loadLocation(Location loc) {
+
+    }
+
+    @Override
+    public void loadLocations(List<Location> locationList) {
+
+    }
+
+    @Override
+    public void loadHousekeeping(Housekeeping housekeeping) {
+
+    }
+
+    @Override
+    public void loadHousekeepings(List<Housekeeping> housekeepingList) {
+
+    }
+
+    @Override
+    public void receiveMessage(String message) {
+
+    }
 }

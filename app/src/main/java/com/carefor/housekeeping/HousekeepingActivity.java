@@ -1,7 +1,7 @@
-package com.carefor.search;
-
+package com.carefor.housekeeping;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -11,26 +11,27 @@ import android.widget.Toast;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.mainui.R;
+import com.carefor.search.SearchActivity;
 import com.carefor.util.ActivityUtils;
 
-
 /**
- * Created by baige on 2017/12/26.
+ * Created by baige on 2018/3/13.
  */
 
-public class SearchActivity extends AppCompatActivity {
+public class HousekeepingActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
 
     private Toast mToast;
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_toolbar_commmon);
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mToolbar.setTitle("添加成员");
+        mToolbar.setTitle("家政服务");
         //为activity窗口设置活动栏
         setSupportActionBar(mToolbar);
         final ActionBar actionBar = getSupportActionBar();
@@ -44,20 +45,13 @@ public class SearchActivity extends AppCompatActivity {
             }
         });
 
-        SearchFragment searchFragment  = (SearchFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
-        if(searchFragment == null){
-            searchFragment = SearchFragment.newInstance();
-            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), searchFragment, R.id.contentFrame);
+        HousekeepingFragment housekeepingFragment = (HousekeepingFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
+        if(housekeepingFragment == null){
+            housekeepingFragment =  HousekeepingFragment.newInstance();
+            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), housekeepingFragment, R.id.contentFrame);
         }
-        SearchPresenter searchPresenter = new SearchPresenter(Repository.getInstance(LocalRepository.getInstance(getApplicationContext())), searchFragment);
-    }
+        HousekeepingPresenter housekeepingPresenter = new HousekeepingPresenter(Repository.getInstance(LocalRepository.getInstance(getApplicationContext())), housekeepingFragment);
 
-    public void showTip(final String text){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-            }
-        });
+
     }
 }

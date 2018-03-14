@@ -1,6 +1,8 @@
 package com.carefor.data.source.remote;
 
 import com.carefor.callback.BaseCallBack;
+import com.carefor.data.entity.Housekeeping;
+import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
 
 import java.util.List;
@@ -52,6 +54,18 @@ public interface ServerHelper {
 
         void loadAUser(User user);
 
+
+
+        void loadLocation(Location loc);
+
+        void loadLocations(List<Location> locationList);
+
+        void loadHousekeeping(Housekeeping housekeeping);
+
+        void loadHousekeepings(List<Housekeeping> housekeepingList);
+
+        void receiveMessage(String message);
+
     }
 
     void login(User user, BaseCallBack callBack);
@@ -80,6 +94,20 @@ public interface ServerHelper {
 
     void replyLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack);
 
-    //TODO
+    void uploadLocation(int uid, String loc, long time, BaseCallBack callBack);
+
+    void searchLocationByTime(int uid, long time, BaseCallBack callBack);
+
+    void searchLocationByById(int uid, BaseCallBack callBack);
+
+    void getAllHousekeeping(BaseCallBack callBack);
+
+    void searchHousekeepingById(int id, BaseCallBack callBack);
+
+    void searchHousekeepingByKey(String key, BaseCallBack callBack);
+
+    void sendMessageTo(int from, int to, String message, BaseCallBack callBack);
+
+
 
 }

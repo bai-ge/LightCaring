@@ -40,7 +40,7 @@ public class PhonePresenter implements PhoneContract.Presenter {
         CacheRepository cacheRepository = CacheRepository.getInstance();
 
         mPhonefragment.showLog("device id=" + cacheRepository.getDeviceId());
-        mPhonefragment.showLog("call to="+ cacheRepository.getEmergencyUser().getDeviceId());
+        mPhonefragment.showLog("call to="+ cacheRepository.getSelectUser().getDeviceId());
         mPhonefragment.showLog("通话服务器地址："+cacheRepository.getServerIp()+":"+cacheRepository.getServerPort());
 
         //当通话界面在前台显示的时候连接器数据直接反馈回这里
@@ -99,8 +99,8 @@ public class PhonePresenter implements PhoneContract.Presenter {
                 mPhonefragment.showLog("错误");
                 break;
         }
-        if(CacheRepository.getInstance().getEmergencyUser() != null){
-            mPhonefragment.showName(CacheRepository.getInstance().getEmergencyUser().getName());
+        if(CacheRepository.getInstance().getSelectUser() != null){
+            mPhonefragment.showName(CacheRepository.getInstance().getSelectUser().getName());
         }
         //TODO 先显示当前的一些状态再设置监听器
 
@@ -203,6 +203,11 @@ public class PhonePresenter implements PhoneContract.Presenter {
             }
             mPhonefragment.showAddress(ip+":"+port);
             mPhonefragment.showLog("成功建立P2P连接");
+        }
+
+        @Override
+        public void disconnected(String mid) {
+
         }
     };
 }

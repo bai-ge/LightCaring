@@ -121,8 +121,6 @@ public class UserAdapter extends BaseAdapter {
                 }
             }
         });
-
-
         return convertView;
     }
 

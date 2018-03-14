@@ -10,13 +10,17 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.carefor.data.entity.Housekeeping;
 import com.carefor.data.entity.User;
 import com.carefor.dropdetection.DropDetectionActivity;
+import com.carefor.housekeeping.HousekeepingActivity;
 import com.carefor.location.LocationActivity;
 import com.carefor.telephone.PhoneActivity;
+import com.carefor.util.Loggerx;
 import com.carefor.view.ItemCardView;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,6 +31,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MainFragment extends Fragment implements MainContract.View {
 
+    private final static String TAG = MainFragment.class.getCanonicalName();
+
     private MainContract.Presenter mPresenter;
 
     private Handler mHandler;
@@ -34,6 +40,10 @@ public class MainFragment extends Fragment implements MainContract.View {
     private Toast mToast;
 
     private TextView mEmName;
+
+    private LinearLayout mInformLayout;
+
+    private TextView mInformText;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -63,6 +73,9 @@ public class MainFragment extends Fragment implements MainContract.View {
     }
     private void initView(View root){
         //TODO
+
+        mInformLayout = (LinearLayout) root.findViewById(R.id.inform_layout);
+        mInformText = (TextView) root.findViewById(R.id.inform_text);
         mEmName = (TextView) root.findViewById(R.id.em_name);
         root.findViewById(R.id.btn_phone).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -92,6 +105,7 @@ public class MainFragment extends Fragment implements MainContract.View {
             @Override
             public void onClick(View v) {
                showTip(((ItemCardView)v).getText().toString());
+                mPresenter.skipToActivity(HousekeepingActivity.class);
             }
         });
         root.findViewById(R.id.btn_remind).setOnClickListener(new View.OnClickListener() {
@@ -104,8 +118,10 @@ public class MainFragment extends Fragment implements MainContract.View {
             @Override
             public void onClick(View v) {
                 showTip(((ItemCardView)v).getText().toString());
+                Loggerx.d(TAG, ((ItemCardView)v).getText().toString());
             }
         });
+        hideInform();
 
 //        root.findViewById(R.id.btn_jpush).setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -153,5 +169,48 @@ public class MainFragment extends Fragment implements MainContract.View {
 
             }
         });
+    }
+
+    private Runnable mHideInformRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(mInformLayout != null){
+                mInformLayout.setVisibility(View.INVISIBLE);
+            }
+        }
+    };
+
+    @Override
+    public void showInform(final String text) {
+        mHandler.removeCallbacks(mHideInformRunnable);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mInformText.setText(text);
+                if(mInformLayout != null){
+                    mInformLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void showInform(String text, long time) {
+        showInform(text);
+        if(time <= 0){
+            time = 8000;
+        }
+        mHandler.postDelayed(mHideInformRunnable, time);
+    }
+
+    @Override
+    public void hideInform() {
+        mHandler.post(mHideInformRunnable);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //mPresenter.stop();
     }
 }

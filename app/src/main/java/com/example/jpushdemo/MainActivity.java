@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -140,18 +141,25 @@ public class MainActivity extends InstrumentedActivity implements OnClickListene
 	
 
 	//for receive customer msg from jpush server
-	private MessageReceiver mMessageReceiver;
+	private MyReceiver mMessageReceiver;
 	public static final String MESSAGE_RECEIVED_ACTION = "com.example.jpushdemo.MESSAGE_RECEIVED_ACTION";
 	public static final String KEY_TITLE = "title";
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_EXTRAS = "extras";
 	
 	public void registerMessageReceiver() {
-		mMessageReceiver = new MessageReceiver();
+		mMessageReceiver = new MyReceiver();
 		IntentFilter filter = new IntentFilter();
 		filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
-		filter.addAction(MESSAGE_RECEIVED_ACTION);
-		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, filter);
+        filter.addAction(MESSAGE_RECEIVED_ACTION);
+        filter.addAction(JPushInterface.ACTION_REGISTRATION_ID);
+        filter.addAction(JPushInterface.ACTION_MESSAGE_RECEIVED);
+        filter.addAction(JPushInterface.ACTION_NOTIFICATION_RECEIVED);
+        filter.addAction(JPushInterface.ACTION_NOTIFICATION_OPENED);
+        filter.addAction(JPushInterface.ACTION_RICHPUSH_CALLBACK);
+        filter.addAction(JPushInterface.ACTION_CONNECTION_CHANGE);
+        registerReceiver(mMessageReceiver, filter);
+		//LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, filter);
 	}
 
 	public class MessageReceiver extends BroadcastReceiver {
@@ -168,7 +176,8 @@ public class MainActivity extends InstrumentedActivity implements OnClickListene
 						showMsg.append(KEY_EXTRAS + " : " + extras + "\n");
 					}
 					setCostomMsg(showMsg.toString());
-				}
+                    Log.d(TAG, "接收到消息："+showMsg.toString());
+                }
 			} catch (Exception e){
 			}
 		}

@@ -4,8 +4,12 @@ package com.carefor.data.source;
 import android.util.Log;
 
 import com.carefor.callback.BaseCallBack;
+import com.carefor.callback.CallbackManager;
+import com.carefor.callback.HousekeepingResponseBinder;
+import com.carefor.callback.LocationResponseBinder;
 import com.carefor.callback.SimpleResponseBinder;
 import com.carefor.callback.UserResponseBinder;
+import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.data.source.remote.Parm;
@@ -44,12 +48,16 @@ public class Repository implements DataSource, ServerHelper {
     //根据服务器返回的 Json信息， 和特定的callback 的绑定，实现调用
     private SimpleResponseBinder mSimpleResponseBinder;
     private UserResponseBinder mUserResponseBinder;
+    private LocationResponseBinder mLocationResponseBinder;
+    private HousekeepingResponseBinder mHousekeepingResponseBinder;
 
     private Repository(LocalRepository localRepository) {
 
         fixedThreadPool = Executors.newFixedThreadPool(5);//创建最多能并发运行5个线程的线程池
         mSimpleResponseBinder = new SimpleResponseBinder();
         mUserResponseBinder = new UserResponseBinder();
+        mLocationResponseBinder = new LocationResponseBinder();
+        mHousekeepingResponseBinder = new HousekeepingResponseBinder();
         //TODO 新建本地和远程数据获取来源
         mLocalRepository = checkNotNull(localRepository);
         mLocalRepository = localRepository;
@@ -78,7 +86,7 @@ public class Repository implements DataSource, ServerHelper {
         if (mRemoteRepository == null) {
             callBack.fail();
         } else {
-            mRemoteRepository.login(user, callBack);
+          //  mRemoteRepository.login(user, callBack);
             mRemoteRepository.loginMD5(user, callBack);
         }
     }
@@ -335,14 +343,212 @@ public class Repository implements DataSource, ServerHelper {
 
     @Override
     public void askLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
+        checkNotNull(content);
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
+        CallbackManager callbackManager = CallbackManager.getInstance();
+        callbackManager.put(callBack);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.askLocation(code, description, sendUid, receUid, content, callBack);
+        }
 
+
+    }
+    public void asynAskLocation(final int code, final String description, final int sendUid, final int receUid, final String content, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    askLocation(code, description, sendUid, receUid, content, callBack);
+                }
+            });
+        }
     }
 
     @Override
     public void replyLocation(int code, String description, int sendUid, int receUid, String content, BaseCallBack callBack) {
+        checkNotNull(content);
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.replyLocation(code, description, sendUid, receUid, content, callBack);
+        }
 
     }
-    /*
+    public void asynReplyLocation(final int code, final String description, final int sendUid, final int receUid, final String content, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    replyLocation(code, description, sendUid, receUid, content, callBack);
+                }
+            });
+        }
+
+    }
+
+    @Override
+    public void uploadLocation(int uid, String loc, long time, BaseCallBack callBack) {
+        checkNotNull(loc);
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.uploadLocation(uid, loc, time, callBack);
+        }
+    }
+
+    public void asynUploadLocation(final int uid, final String loc, final long time, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    uploadLocation(uid, loc, time, callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void searchLocationByTime(int uid, long time, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mLocationResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.searchLocationByTime(uid, time, callBack);
+        }
+    }
+
+    public void asynSearchLocationByTime(final int uid, final long time, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    searchLocationByTime(uid, time, callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void searchLocationByById(int uid, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mLocationResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.searchLocationByById(uid, callBack);
+        }
+    }
+
+    public void asynSearchLocationByById(final int uid, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    searchLocationByById(uid, callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void getAllHousekeeping(BaseCallBack callBack) {
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mHousekeepingResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.getAllHousekeeping(callBack);
+        }
+    }
+
+    public void asynGetAllHousekeeping(final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    getAllHousekeeping(callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void searchHousekeepingById(int id, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mHousekeepingResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.searchHousekeepingById(id, callBack);
+        }
+    }
+    public void asynSearchHousekeepingById(final int id, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    searchHousekeepingById(id, callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void searchHousekeepingByKey(String key, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        checkNotNull(key);
+        callBack.setResponseBinder(mHousekeepingResponseBinder);
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.searchHousekeepingByKey(key, callBack);
+        }
+    }
+    public void asynSearchHousekeepingByKey(final String key, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    searchHousekeepingByKey(key, callBack);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void sendMessageTo(int from, int to, String message, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        checkNotNull(message);
+        callBack.setResponseBinder(mSimpleResponseBinder);
+        CallbackManager callbackManager = CallbackManager.getInstance();
+        callbackManager.put(callBack);
+
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.sendMessageTo(from, to, message, callBack);
+        }
+    }
+
+    public void asynSendMessageTo(final int from, final int to, final String message, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    sendMessageTo(from, to, message, callBack);
+                }
+            });
+        }
+    }
+/*
     class SimpleServerCallBack implements ServerHelper.ServerCallBack{
         ServerAPI.BaseCallBack mCallBack;
 

@@ -141,50 +141,52 @@ public class MemberManageActivity extends BaseActivity {
         CacheRepository cacheRepository = CacheRepository.getInstance();
         final User user = cacheRepository.who();
         mUserAdapter.clear();//清除旧数据
-        mRepository.asynGetAllPupillusOf(user.getUid(), new SeniorCallBack() {
-            @Override
-            public void onResponse() {
-                super.onResponse();
-                showTip("查询被监护人响应");
-                setRefreshing(false);
 
-            }
+        if(user.getType() == 1){//监护人
+            mRepository.asynGetAllPupillusOf(user.getUid(), new SeniorCallBack() {
+                @Override
+                public void onResponse() {
+                    super.onResponse();
+                    showTip("查询被监护人响应");
+                    setTitle("被监护人管理");
+                    setRefreshing(false);
 
-            @Override
-            public void loadUsers(List<User> list) {
-                super.loadUsers(list);
-                mUserAdapter.addUsers(list);
-            }
+                }
 
-            @Override
-            public void meaning(String text) {
-                showTip("查询被监护人" + text);
-            }
-        });
-        mRepository.asynGetAllGuardiansOf(user.getUid(), new SeniorCallBack() {
-            @Override
-            public void onResponse() {
-                super.onResponse();
-                showTip("查询监护人响应");
-                setRefreshing(false);
-            }
+                @Override
+                public void loadUsers(List<User> list) {
+                    super.loadUsers(list);
+                    Log.d(TAG, list.toString());
+                    mUserAdapter.addUsers(list);
+                }
 
-            @Override
-            public void loadUsers(List<User> list) {
-                super.loadUsers(list);
-                mUserAdapter.addUsers(list);
-            }
+                @Override
+                public void meaning(String text) {
+                    showTip("查询被监护人" + text);
+                }
+            });
+        }else if(user.getType() == 2){ //被监护人
+            mRepository.asynGetAllGuardiansOf(user.getUid(), new SeniorCallBack() {
+                @Override
+                public void onResponse() {
+                    super.onResponse();
+                    showTip("查询监护人响应");
+                    setTitle("监护人管理");
+                    setRefreshing(false);
+                }
 
-            @Override
-            public void meaning(String text) {
-                showTip("查询监护人" + text);
-            }
-        });
-        //TODO 每个用户都只有一种身份，现在服务器没完善好
-        if (user.getType() == 1) {//监护人
+                @Override
+                public void loadUsers(List<User> list) {
+                    super.loadUsers(list);
+                    Log.d(TAG, list.toString());
+                    mUserAdapter.addUsers(list);
+                }
 
-        } else if (user.getType() == 2) {//被监护人
-
+                @Override
+                public void meaning(String text) {
+                    showTip("查询监护人" + text);
+                }
+            });
         }
     }
     @Override
@@ -204,12 +206,12 @@ public class MemberManageActivity extends BaseActivity {
                 public void loadAUser(User u) {
                     super.loadAUser(u);
                     Log.d(TAG, "紧急联系人" + u);
-                    CacheRepository.getInstance().setEmergencyUser(u);
+                    CacheRepository.getInstance().setSelectUser(u);
                     CacheRepository.getInstance().setTalkWith(u.getDeviceId());
                     CacheRepository.getInstance().saveConfig(getApplicationContext());
                 }
             });
-            CacheRepository.getInstance().setEmergencyUser(user);
+            CacheRepository.getInstance().setSelectUser(user);
             CacheRepository.getInstance().saveConfig(getApplicationContext());
             onBackPressed();
 
@@ -222,6 +224,14 @@ public class MemberManageActivity extends BaseActivity {
             public void run() {
                 mToast.setText(text);
                 mToast.show();
+            }
+        });
+    }
+    private void setTitle(final String title){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mToolbar.setTitle(title);
             }
         });
     }

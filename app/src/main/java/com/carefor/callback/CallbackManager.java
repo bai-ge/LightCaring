@@ -46,4 +46,10 @@ public class CallbackManager {
         }
         return null;
     }
+    public BaseCallBack remote(String id){
+        if(!Tools.isEmpty(id)){
+            return mCallBackMap.remove(id);
+        }
+        return null;
+    }
 }

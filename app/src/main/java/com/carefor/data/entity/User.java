@@ -13,7 +13,7 @@ import org.json.JSONObject;
  * Created by baige on 2017/12/22.
  */
 
-public class User {
+public class User{
 
     private int uid; //远程服务器主键
     private String name;
@@ -176,4 +176,7 @@ public class User {
         }
         return null;
     }
+
+
+
 }

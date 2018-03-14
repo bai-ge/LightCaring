@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +24,8 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.Poi;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.InfoWindow;
+import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -31,16 +34,17 @@ import com.baidu.mapapi.map.Marker;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
-import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.utils.DistanceUtil;
+import com.carefor.data.entity.Location;
+import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.mainui.R;
+import com.carefor.util.Tools;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static android.content.Context.SENSOR_SERVICE;
@@ -63,16 +67,44 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     private MapView mMapView;
 
-    private Button mBtnLocModel;
-    private Button mBtnLoc;
-    private TextView mTxtLocation;
     private TextView mTxtLatLng;
+    private TextView mTxtLocation;
+    private LinearLayout mLinearLayout;
 
-    private boolean isFirstLoc = true; // 是否首次定位
+    private Runnable mHintInformRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(mLinearLayout != null){
+                mLinearLayout.setVisibility(View.GONE);
+            }
+        }
+    };
+    private Runnable mHintLocationDialogRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(mBaiduMap != null && mInfoWindow != null){
+                mBaiduMap.hideInfoWindow();
+            }
+        }
+    };
+    private TextView mTxtInform;
+    private Button mBtnLocModel;
 
-    private MyLocationData mLocData;
+    private Button mBtnAskLocation;
+    private Button mBtnDestination;
+    private Button mBtnTrack;
+
+
+    private InfoWindow mInfoWindow;
+    private TextView mDialogText;
 
     private View mScaleView;
+
+
+    private boolean isFirstLoc = true; // 是否首次定位
+    private MyLocationData mLocData;
+
+
     // 定位相关
     private LocationService locationService;
     private BaiduMap mBaiduMap;
@@ -84,9 +116,8 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     private Double mLastX = 0.0;
     private int mCurrentDirection = 0; //方向 0~360
-    private double mCurrentLat = 0.0;//维度
-    private double mCurrentLon = 0.0; //经度
-    private float mCurrentAccracy; //精度
+
+    private CacheRepository mCacheRepository;
 
 
     //标记
@@ -94,12 +125,11 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     private Marker mMarker;
 
-    private Polyline mPolyline;
-    private PolylineOptions mOverlayOptions;
+    private Polyline mMyPolyline;
+    private Polyline mSelDesPolyline;
     private BitmapDescriptor mRedTexture;
-    private List<LatLng> mPoints = new ArrayList<LatLng>();
 
-    private LinkedList<LocationEntity> locationList = new LinkedList<LocationEntity>(); // 存放历史定位结果的链表，最大存放当前结果的前5次定位结果
+
 
 
 
@@ -118,6 +148,9 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
         mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);//获取传感器管理服务
         mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
+
+        mDialogText = new TextView(getContext());
+        mDialogText.setBackgroundResource(R.drawable.popup);
         Log.d(TAG, "onCreate()");
     }
 
@@ -135,6 +168,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_location, container, false);
+        mCacheRepository = CacheRepository.getInstance();
         initView(root);
         Log.d(TAG, "onCreateView()");
         return root;
@@ -160,26 +194,64 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
              * 双击地图
              */
             public void onMapDoubleClick(LatLng point) {
-                marker(point);
+//                marker(point);
                 showTip("双击");
+            }
+        });
+        mBaiduMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if(marker == mMarker){
+                    showLocationDialog(marker.getPosition());
+                }
+                return true;
             }
         });
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
-
-        mBtnLoc = (Button) root.findViewById(R.id.btn_location);
         mBtnLocModel = (Button) root.findViewById(R.id.btn_model);
+        mBtnAskLocation = (Button) root.findViewById(R.id.btn_ask_location);
+        mBtnDestination = (Button) root.findViewById(R.id.btn_destination);
+        mBtnTrack = (Button) root.findViewById(R.id.btn_track);
         mTxtLatLng = (TextView) root.findViewById(R.id.txt_latlng);
         mTxtLocation = (TextView) root.findViewById(R.id.txt_location);
+
+        mLinearLayout = (LinearLayout) root.findViewById(R.id.inform_layout);
+        mTxtInform = (TextView) root.findViewById(R.id.inform_text);
         mScaleView = root.findViewById(R.id.scale_view);
 
         mRedTexture = BitmapDescriptorFactory.fromAsset("icon_road_red_arrow.png");
 
-
-        mBtnLoc.setOnClickListener(new View.OnClickListener() {
+        mBtnTrack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                locationService.requestLocation();
+                if(mSelDesPolyline != null && mSelDesPolyline.isVisible()){
+                    mBtnTrack.setBackgroundResource(R.drawable.btn_hint_track);
+                    mSelDesPolyline.setVisible(false);
+                }else{
+                    mBtnTrack.setBackgroundResource(R.drawable.btn_show_track);
+                    if(mSelDesPolyline != null){
+                        mSelDesPolyline.setVisible(true);
+                    }
+                }
+            }
+        });
+        mBtnAskLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPresenter.askLocation();
+            }
+        });
+        mBtnDestination.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mBaiduMap != null && mMarker != null){
+                    LatLng position = mMarker.getPosition();
+                    MapStatus.Builder builder = new MapStatus.Builder();
+                    builder.target(position);
+                    mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+                }
+                mPresenter.loadLocation();
             }
         });
         mBtnLocModel.setOnClickListener(new View.OnClickListener() {
@@ -207,9 +279,11 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                     default:
                         break;
                 }
-                if(mPoints.size() > 0){
+                int size = mCacheRepository.getMyPoints().size();
+                locationService.requestLocation();
+                if(size > 0){
                     MapStatus.Builder builder = new MapStatus.Builder();
-                    builder.target(mPoints.get(mPoints.size() - 1));
+                    builder.target(mCacheRepository.getMyPoints().get(size - 1));
                     mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 }
             }
@@ -263,16 +337,20 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     }
 
+
+    /**陀螺仪方向改变
+     * @param event
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         double x = event.values[SensorManager.DATA_X];
         if (Math.abs(x - mLastX) > 1.0) {
             mCurrentDirection = (int) x;
             mLocData = new MyLocationData.Builder()
-                    .accuracy(mCurrentAccracy)
+                    .accuracy(mCacheRepository.getCurrentAccracy())
                     // 此处设置开发者获取到的方向信息，顺时针0-360
-                    .direction(mCurrentDirection).latitude(mCurrentLat)
-                    .longitude(mCurrentLon).build();
+                    .direction(mCurrentDirection).latitude(mCacheRepository.getCurrentLat())
+                    .longitude(mCacheRepository.getCurrentLon()).build();
             mBaiduMap.setMyLocationData(mLocData);
         }
         mLastX = x;
@@ -304,6 +382,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
     }
 
     private void marker(LatLng ll){
+        Log.d(TAG, "标记");
         if(ll == null){
             return;
         }
@@ -313,6 +392,13 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         }else{
             mMarker.setPosition(ll);
         }
+        MapStatus.Builder builder = new MapStatus.Builder();
+        builder.target(ll);
+        mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+        if(mInfoWindow != null){
+            mBaiduMap.hideInfoWindow();
+        }
+        showLocationDialog(ll);
     }
 
     @Override
@@ -324,6 +410,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     @Override
     public void onStop() {
+        mPresenter.stop();
         //取消注册传感器监听
         mSensorManager.unregisterListener(this);
         locationService.unregisterListener(TAG); //注销掉监听
@@ -354,6 +441,18 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         });
     }
 
+    @Override
+    public void showInform(final String text) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mTxtInform.setText(text);
+                mLinearLayout.setVisibility(View.VISIBLE);
+                mHandler.removeCallbacks(mHintInformRunnable);
+                mHandler.postDelayed(mHintInformRunnable, 1000*30);
+            }
+        });
+    }
 
     /**
      * 定位SDK监听函数
@@ -365,20 +464,40 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             if (location == null || mMapView == null) {
                 return;
             }
-            //连续瞄点
-            Message locMsg = locHander.obtainMessage();
-            Bundle locData;
-            locData = Algorithm(location);
-            if (locData != null) {
-                locData.putParcelable("loc", location);
-                locMsg.setData(locData);
-                locHander.sendMessage(locMsg);
+            //更新位置
+            LatLng point = new LatLng(location.getLatitude(), location.getLongitude());
+            int size = mCacheRepository.getMyPoints().size();
+            double distance = 0;
+
+            if(size > 2){
+                LatLng lastPoint = mCacheRepository.getMyPoints().get(size - 1);
+                LatLng lessPoint = mCacheRepository.getMyPoints().get(size - 2);
+                distance = DistanceUtil.getDistance(lastPoint, lessPoint);
+                Log.d(TAG, "distance:"+distance +"accuracy: "+location.getRadius());
+                if(distance <= 5 && location.getRadius() <= 50){
+                    mCacheRepository.getMyPoints().remove(size - 1);
+                }
             }
+            if(location.getRadius() <= 50){
+                mCacheRepository.getMyPoints().add(point);
+            }
+            if(mCacheRepository.getMyPoints().size() >= 2){
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(mMyPolyline == null){
+                            PolylineOptions polylineOptions = new PolylineOptions().width(10).points(mCacheRepository.getMyPoints()).color(0xAA0000FF);
+                            mMyPolyline = (Polyline) mBaiduMap.addOverlay(polylineOptions);
+                        }else{
+                            mMyPolyline.setPoints(mCacheRepository.getMyPoints());
+                        }
+                    }
+                });
+            }
+            mCacheRepository.setCurrentLat(location.getLatitude());
+            mCacheRepository.setCurrentLon(location.getLongitude());
+            mCacheRepository.setCurrentAccracy(location.getRadius());
 
-
-            mCurrentLat = location.getLatitude();
-            mCurrentLon = location.getLongitude();
-            mCurrentAccracy = location.getRadius();
             mLocData = new MyLocationData.Builder()
                     .accuracy(location.getRadius())
                     // 此处设置开发者获取到的方向信息，顺时针0-360
@@ -394,15 +513,17 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
             }
 
-            DecimalFormat df = new DecimalFormat("#.00");
-            mTxtLatLng.setText("经度："+ df.format(mCurrentLon) + "    维度："+df.format(mCurrentLat));
+            DecimalFormat df = new DecimalFormat("#.000");
+            mTxtLatLng.setText("经度："+ df.format(mCacheRepository.getCurrentLon()) + "    维度："+df.format(mCacheRepository.getCurrentLat()));
+            mTxtLatLng.append(" d: "+distance);
+            mTxtLatLng.append(" accuracy:"+location.getRadius());
 
             StringBuffer stringBuffer = new StringBuffer(256);
             stringBuffer.append(location.getAddrStr());
             if (location.getPoiList() != null && !location.getPoiList().isEmpty()) {
                 stringBuffer.append("(");
                 for (int i = 0; i < location.getPoiList().size() && i < 2; i++) {
-                    Poi poi = (Poi) location.getPoiList().get(i);
+                    Poi poi = location.getPoiList().get(i);
                     stringBuffer.append(poi.getName() + ";");
                 }
                 stringBuffer.append(")");
@@ -412,121 +533,60 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         }
     };
 
-    /***
-     * 平滑策略代码实现方法，主要通过对新定位和历史定位结果进行速度评分，
-     * 来判断新定位结果的抖动幅度，如果超过经验值，则判定为过大抖动，进行平滑处理,若速度过快，
-     * 则推测有可能是由于运动速度本身造成的，则不进行低速平滑处理 ╭(●｀∀´●)╯
-     *
-     * @param location
-     * @return Bundle
-     */
-    private Bundle Algorithm(BDLocation location) {
-        Bundle locData = new Bundle();
-        double curSpeed = 0;
-        if (locationList.isEmpty() || locationList.size() < 2) {
-            LocationEntity temp = new LocationEntity();
-            temp.location = location;
-            temp.time = System.currentTimeMillis();
-            locData.putInt("iscalculate", 0);
-            locationList.add(temp);
-        } else {
-            if (locationList.size() > 5)
-                locationList.removeFirst();
-            double score = 0;
-            for (int i = 0; i < locationList.size(); ++i) {
-                LatLng lastPoint = new LatLng(locationList.get(i).location.getLatitude(),
-                        locationList.get(i).location.getLongitude());
-                LatLng curPoint = new LatLng(location.getLatitude(), location.getLongitude());
-                double distance = DistanceUtil.getDistance(lastPoint, curPoint);
-                curSpeed = distance / (System.currentTimeMillis() - locationList.get(i).time) / 1000;
-                score += curSpeed * LocationService.EARTH_WEIGHT[i];
+    @Override
+    public void showPLocation(Location loc) {
+        if(loc != null && loc.getLatLng() != null){
+            if(loc.getDescription() != null){
+                mDialogText.setText(loc.getDescription() +"\n"+ Tools.formatTime(loc.getTime()));
             }
-            if (score > 0.00000999 && score < 0.00005) { // 经验值,开发者可根据业务自行调整，也可以不使用这种算法
-                location.setLongitude(
-                        (locationList.get(locationList.size() - 1).location.getLongitude() + location.getLongitude())
-                                / 2);
-                location.setLatitude(
-                        (locationList.get(locationList.size() - 1).location.getLatitude() + location.getLatitude())
-                                / 2);
-                locData.putInt("iscalculate", 1);
-            } else {
-                locData.putInt("iscalculate", 0);
-            }
-            LocationEntity newLocation = new LocationEntity();
-            newLocation.location = location;
-            newLocation.time = System.currentTimeMillis();
-            locationList.add(newLocation);
-
+            marker(loc.getLatLng());
+            showTip("显示位置："+loc.toString());
         }
-        return locData;
     }
 
-    /***
-     * 接收定位结果消息，并显示在地图上
-     */
-    private Handler locHander = new Handler() {
+    @Override
+    public void showPLocation(List<Location> locationList) {
+        //TODO 展示路径
+        final List<LatLng> points = new ArrayList<>();
+        for (int i = 0; i < locationList.size(); i ++){
+            points.add(locationList.get(i).getLatLng());
+        }
+        setTargetDialog(locationList.get(locationList.size()-1).getDescription());
+        showTargetTrack(points);
+    }
 
-        @Override
-        public void handleMessage(Message msg) {
-            // TODO Auto-generated method stub
-            super.handleMessage(msg);
-            try {
-                BDLocation location = msg.getData().getParcelable("loc");
-                int iscal = msg.getData().getInt("iscalculate");
-                if (location != null) {
-                    LatLng point = new LatLng(location.getLatitude(), location.getLongitude());
-                    // 构建Marker图标
-                    BitmapDescriptor bitmap = null;
-                    if (iscal == 0) {
-                        bitmap = BitmapDescriptorFactory.fromResource(R.drawable.icon_openmap_mark); // 非推算结果
-                    } else {
-                        bitmap = BitmapDescriptorFactory.fromResource(R.drawable.icon_openmap_focuse_mark); // 推算结果
-                    }
-
-                    // 构建MarkerOption，用于在地图上添加Marker
-                    OverlayOptions option = new MarkerOptions().position(point).icon(bitmap);
-                    // 在地图上添加Marker，并显示
-                    //mBaiduMap.addOverlay(option);
-                   // mBaiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(point));
-
-                    if(mPoints.size() > 2){
-                        LatLng lastPoint = mPoints.get(mPoints.size() - 1);
-                        LatLng lessPoint = mPoints.get(mPoints.size() - 2);
-                        double distance = DistanceUtil.getDistance(lastPoint, lessPoint);
-                        mTxtLatLng.append("   d: "+distance);
-                        Log.d(TAG, "distance:"+distance);
-                        if(distance <= 5){
-                            mPoints.remove(mPoints.size() - 1);
-                        }
-                    }
-                    mPoints.add(point);
-
-                    if(mOverlayOptions == null){
-                         mOverlayOptions = new PolylineOptions().width(10).points(mPoints).color(0xAAFF0000);
-                         mPolyline = (Polyline) mBaiduMap.addOverlay(mOverlayOptions);
-                    }else{
-                        mPolyline.setPoints(mPoints);
-                    }
-
-
+    @Override
+    public void showTargetTrack(final List<LatLng> loc) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(mSelDesPolyline == null){
+                    mSelDesPolyline = (Polyline) mBaiduMap.addOverlay(new PolylineOptions().width(10).points(loc).color(0xAAFF0000));
+                }else{
+                    mSelDesPolyline.setPoints(loc);
                 }
-            } catch (Exception e) {
-                // TODO: handle exception
             }
-        }
-    };
-
-    /**
-     * 封装定位结果和时间的实体类
-     *
-     * @author baidu
-     *
-     */
-    class LocationEntity {
-        BDLocation location;
-        long time;
+        });
+        marker(loc.get(loc.size() - 1));
     }
 
+    @Override
+    public void setTargetDialog(String text) {
+        mDialogText.setText(text);
+    }
+
+    @Override
+    public void showLocationDialog(final LatLng ll) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mInfoWindow = new InfoWindow(mDialogText, ll, -160);
+                mBaiduMap.showInfoWindow(mInfoWindow);
+                mHandler.removeCallbacks(mHintLocationDialogRunnable);
+                mHandler.postDelayed(mHintLocationDialogRunnable, 8000);
+            }
+        });
+    }
 
 }
 

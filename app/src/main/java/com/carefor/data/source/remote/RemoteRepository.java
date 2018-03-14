@@ -342,7 +342,9 @@ public class RemoteRepository implements DataSource, ServerHelper {
             jsonObject.put(Parm.INUM, code);
             jsonObject.put(Parm.DESCRIPTION, description);
             jsonObject.put(Parm.SENDU_ID, sendUid);
-            jsonObject.put(Parm.CONTENT, content);
+            jsonObject.put(Parm.RECEIVEU_ID, receUid);
+            JSONObject conJson = new JSONObject(content);
+            jsonObject.put(Parm.CONTENT, conJson);
             HttpURLPost(url, jsonObject.toString(), callBack);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -357,10 +359,78 @@ public class RemoteRepository implements DataSource, ServerHelper {
         try {
             jsonObject.put(Parm.INUM, code);
             jsonObject.put(Parm.DESCRIPTION, description);
-            jsonObject.put(Parm.SENDU_ID, sendUid);
-            jsonObject.put(Parm.RECEIVEU_ID, receUid);
-            jsonObject.put(Parm.CONTENT, content);
+            jsonObject.put(Parm.SENDU_ID, String.valueOf(sendUid));
+            jsonObject.put(Parm.RECEIVEU_ID, String.valueOf(receUid));
+            JSONObject conJson = new JSONObject(content);
+            jsonObject.put(Parm.CONTENT, conJson);
             HttpURLPost(url, jsonObject.toString(), callBack);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callBack.error(e);
+        }
+    }
+
+    @Override
+    public void uploadLocation(int uid, String loc, long time, BaseCallBack callBack) {
+        String url = serverAddress + "/api/services/location/custom";
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put(Parm.UID, uid);
+            jsonObject.put(Parm.POS, loc);
+            jsonObject.put(Parm.TIME, time);
+            HttpURLPost(url, jsonObject.toString(), callBack);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callBack.error(e);
+        }
+    }
+
+    @Override
+    public void searchLocationByTime(int uid, long time, BaseCallBack callBack) {
+        String url = serverAddress + "/api/services/location/historyByTime?u_id="+uid+"&time="+time;
+        HttpURLGet(url, callBack);
+    }
+
+    @Override
+    public void searchLocationByById(int uid, BaseCallBack callBack) {
+        String url = serverAddress + "/api/services/location/history?u_id="+uid;
+        HttpURLGet(url, callBack);
+    }
+
+    @Override
+    public void getAllHousekeeping(BaseCallBack callBack) {
+        String url = serverAddress + "/api/service/hourse_keeping/list";
+        HttpURLGet(url, callBack);
+    }
+
+    @Override
+    public void searchHousekeepingById(int id, BaseCallBack callBack) {
+        String url = serverAddress + "/api/service/hourse_keeping/"+id;
+        HttpURLGet(url, callBack);
+    }
+
+    @Override
+    public void searchHousekeepingByKey(String key, BaseCallBack callBack) {
+        String url = serverAddress + "/api/service/hourse_keeping/list";
+        JSONObject json = new JSONObject();
+        try {
+            json.put(Parm.KEYWORD, key);
+            HttpURLPost(url, json.toString(), callBack);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callBack.error(e);
+        }
+    }
+
+    @Override
+    public void sendMessageTo(int from, int to, String message, BaseCallBack callBack) {
+        String url = serverAddress + "/api/services/transmission/custom";
+        JSONObject json = new JSONObject();
+        try {
+            json.put(Parm.FROM, String.valueOf(from));
+            json.put(Parm.TO, String.valueOf(to));
+            json.put(Parm.MESSAGE, message);
+            HttpURLPost(url, json.toString(), callBack);
         } catch (JSONException e) {
             e.printStackTrace();
             callBack.error(e);

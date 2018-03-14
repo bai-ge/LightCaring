@@ -8,7 +8,6 @@ import com.carefor.data.entity.Transinformation;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.telephone.TelePhone;
 import com.carefor.telephone.TelePhoneAPI;
-import com.google.common.collect.Interners;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -18,6 +17,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -40,67 +40,157 @@ public class Connector {
     private static Connector INSTANCE = null;
 
     private ConnectedByTCP connectedByTCP = null;
+    private long connectedRefreshTime;
 
     private ConnectedByUDP connectedByUDP = null;
 
     private static ExecutorService fixedThreadPool = null;
 
-    private Map<String, OnConnectorListener> mListeners = null;
+    private static ExecutorService connectThreadPool = null;
+
+    private Map<String, OnConnectorListener> mListenerMap = null;
+
 
     private long mP2pConnetTime = 0;
 
     public final static String LISTENER_SERVICE = "service";
     public final static String LISTENER_PRESENTER = "presenter";
 
+    private int mConnectRunning = 0;
+
+    //网络相关
+    private boolean wifiEnable; //是否打开wifi
+    private boolean wifiValid; //WiFi网络是否可用
+
+    private boolean networkValid; //手机网络是否可用
+
+    //网络相关
+    public boolean isWifiEnable() {
+        return wifiEnable;
+    }
+
+    public void setWifiEnable(boolean wifiEnable) {
+        this.wifiEnable = wifiEnable;
+    }
+
+    public boolean isWifiValid() {
+        return wifiValid;
+    }
+
+    public void setWifiValid(boolean wifiValid) {
+        this.wifiValid = wifiValid;
+    }
+
+    public boolean isNetworkValid() {
+        return networkValid;
+    }
+
+    public void setNetworkValid(boolean networkValid) {
+        this.networkValid = networkValid;
+    }
+
+
+    private ConnectServiceThread connectServiceThread;
+    private long tryConnectServiceTime;
+
+    class ConnectServiceThread extends Thread{
+        @Override
+        public void run() {
+            super.run();
+            CacheRepository cacheRepository = CacheRepository.getInstance();
+            ConnectedByTCP conTCP = null;
+            SocketAddress address = new InetSocketAddress(cacheRepository.getServerIp(), cacheRepository.getServerPort());
+            Socket socket = new Socket();
+            try {
+                Log.v(TAG, "服务器地址：" + address.toString());
+                socket.setSoTimeout(5000);//通过此方法设置超时才生效
+                socket.connect(address, 5000);
+                Log.d(TAG, "连接服务器成功");
+                cacheRepository.setLocalIp(socket.getLocalAddress().getHostAddress());
+                cacheRepository.setLocalPort(socket.getLocalPort());
+                conTCP = new ConnectedByTCP(cacheRepository.getDeviceId(), socket, mOnTCPConnectListener);
+                //登录
+                String msg = MessageManager.login();
+                conTCP.send(msg);
+                synchronized (Connector.class){
+                    connectedRefreshTime = System.currentTimeMillis();
+                    Connector.this.connectedByTCP = conTCP;
+                }
+
+            }catch (IOException e) {
+                mOnTCPConnectListener.connectedFail();
+                mOnTCPConnectListener.exceptionCaught(conTCP, e);
+                Log.d(TAG, "连接失败："+e.getMessage());
+            }catch (Exception e){
+                Log.d(TAG, "连接异常:"+e.getMessage());
+            }
+        }
+    }
+
+    //不建议使用
     Runnable mConnectRunnable = new Runnable() {
         @Override
         public void run() {
+            Log.d(TAG, "测试连接服务器");
             CacheRepository cacheRepository = CacheRepository.getInstance();
-            synchronized (Connector.class) {
-                //检查是否已经连接指定主机
-                if (cacheRepository.getServerIp() == null) {
-                    return;
-                }
-                if (connectedByTCP != null && connectedByTCP.isWork()) {
-                    if (connectedByTCP.getSocket().getInetAddress().getHostAddress().equals(cacheRepository.getServerIp())
-                            && connectedByTCP.getSocket().getPort() == cacheRepository.getServerPort()) {
-                        Log.d(TAG, "ip=" + connectedByTCP.getSocket().getInetAddress().getHostAddress());
-                        Log.d(TAG, "serverIP=" + cacheRepository.getServerIp());
-                        OnConnectSuccess();
+            if (mConnectRunning == 0) {
+                synchronized (Connector.class) {
+                    if (mConnectRunning == 0) {
+                        mConnectRunning ++;
+                        //检查是否已经连接指定主机
+                        if (cacheRepository.getServerIp() == null) {
+                            Log.d(TAG, "测试连接服务器 ip =" + null);
+                            mConnectRunning --;
+                            return;
+                        }
+                        if (connectedByTCP != null && connectedByTCP.isWork()) {
+                            if (connectedByTCP.getSocket().getInetAddress().getHostAddress().equals(cacheRepository.getServerIp())
+                                    && connectedByTCP.getSocket().getPort() == cacheRepository.getServerPort()) {
+                                Log.d(TAG, "ip=" + connectedByTCP.getSocket().getInetAddress().getHostAddress());
+                                Log.d(TAG, "serverIP=" + cacheRepository.getServerIp());
+                                mListener.connectSuccess();
 //                        if (mListener != null) {
 //                            mListener.connectSuccess();
 //                        }
-                        return;
+                                return;
+                            }
+                        }
+                        if (connectedByTCP != null) {
+                            connectedByTCP.close();
+                            connectedByTCP = null;
+                        }
+
+                        SocketAddress address = new InetSocketAddress(cacheRepository.getServerIp(), cacheRepository.getServerPort());
+                        Socket socket = new Socket();
+                        try {
+                            Log.v(TAG, "服务器地址：" + address.toString());
+                            socket.setSoTimeout(5000);//通过此方法设置超时才生效
+                            socket.connect(address, 5000);
+                            Log.d(TAG, "连接服务器成功");
+                            cacheRepository.setLocalIp(socket.getLocalAddress().getHostAddress());
+                            cacheRepository.setLocalPort(socket.getLocalPort());
+                            connectedByTCP = new ConnectedByTCP(cacheRepository.getDeviceId(), socket, mOnTCPConnectListener);
+                            //登录
+                            String msg = MessageManager.login();
+                            connectedByTCP.send(msg);
+
+                        }catch (IOException e) {
+                            mOnTCPConnectListener.connectedFail();
+                            mOnTCPConnectListener.exceptionCaught(connectedByTCP, e);
+                            Log.d(TAG, "连接失败："+e.getMessage());
+                        }
+                        mConnectRunning--;
                     }
                 }
-                if (connectedByTCP != null) {
-                    connectedByTCP.close();
-                    connectedByTCP = null;
-                }
-
-                SocketAddress address = new InetSocketAddress(cacheRepository.getServerIp(), cacheRepository.getServerPort());
-                Socket socket = new Socket();
-                try {
-                    Log.v(TAG, "服务器地址：" + address.toString());
-                    socket.connect(address, 10000);
-                    Log.d(TAG, "连接服务器成功");
-                    cacheRepository.setLocalIp(socket.getLocalAddress().getHostAddress());
-                    cacheRepository.setLocalPort(socket.getLocalPort());
-                    connectedByTCP = new ConnectedByTCP(cacheRepository.getDeviceId(), socket, mOnTCPConnectListener);
-                    //登录
-                    String msg = MessageManager.login();
-                    connectedByTCP.send(msg);
-                } catch (IOException e) {
-                    mOnTCPConnectListener.connectedFail();
-                    mOnTCPConnectListener.exceptionCaught(connectedByTCP, e);
-                }
             }
+
         }
     };
 
     private Connector() {
         fixedThreadPool = Executors.newFixedThreadPool(5);//创建最多能并发运行5个线程的线程池
-        mListeners = Collections.synchronizedMap(new LinkedHashMap<String, OnConnectorListener>());
+        connectThreadPool = Executors.newFixedThreadPool(3);
+        mListenerMap = Collections.synchronizedMap(new LinkedHashMap<String, OnConnectorListener>());
         connectedByUDP = new ConnectedByUDP();
         connectedByUDP.setOnUDPConnectListener(mOnUDPConnectListener);
         connectedByUDP.start();
@@ -123,22 +213,22 @@ public class Connector {
     public void RegistConnectorListener(String id, OnConnectorListener listener) {
         checkNotNull(id);
         checkNotNull(listener);
-        synchronized (mListeners.getClass()) {
-            mListeners.put(id, listener);
+        synchronized (mListenerMap.getClass()) {
+            mListenerMap.put(id, listener);
         }
     }
 
     //注销监听器
     public void unRegistConnectorListener(String id) {
         checkNotNull(id);
-        synchronized (mListeners.getClass()) {
-            mListeners.remove(id);
+        synchronized (mListenerMap.getClass()) {
+            mListenerMap.remove(id);
         }
     }
 
     //发送心跳包
-    public void sendHeartBeat(){
-        if(fixedThreadPool != null){
+    public void sendHeartBeat() {
+        if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -149,10 +239,51 @@ public class Connector {
     }
 
     public void afxConnectServer() {
-        fixedThreadPool.submit(mConnectRunnable);
+        if(wifiValid || networkValid){
+            long refreshTime = connectedRefreshTime;
+            CacheRepository cacheRepository = CacheRepository.getInstance();
+            //检查是否已经连接指定主机
+            if (cacheRepository.getServerIp() == null) {
+                Log.d(TAG, "测试连接服务器 ip =" + null);
+                return;
+            }
+
+            //检查是否更改了服务器IP或端口
+            if (connectedByTCP != null && connectedByTCP.isWork()) {
+                if (connectedByTCP.getSocket().getInetAddress().getHostAddress().equals(cacheRepository.getServerIp())
+                        && connectedByTCP.getSocket().getPort() == cacheRepository.getServerPort()) {
+                    Log.d(TAG, "ip=" + connectedByTCP.getSocket().getInetAddress().getHostAddress());
+                    Log.d(TAG, "serverIP=" + cacheRepository.getServerIp());
+                    mListener.connectSuccess();
+//                        if (mListener != null) {
+//                            mListener.connectSuccess();
+//                        }
+                    return;
+                }
+            }
+            //保证connectedByTCP 没有被重新更新
+            synchronized (Connector.class){
+                if (connectedByTCP != null && refreshTime == connectedRefreshTime) {
+                    connectedByTCP.close();
+                    connectedByTCP = null;
+                }
+            }
+            if(connectedByTCP == null){
+                if(connectServiceThread != null
+                        && !connectServiceThread.isInterrupted()
+                        && System.currentTimeMillis() - tryConnectServiceTime >= 8000){
+                    connectServiceThread.interrupt();
+                }
+                connectServiceThread = new ConnectServiceThread();
+                connectServiceThread.start();
+                tryConnectServiceTime = System.currentTimeMillis();
+            }
+        }else{
+            Log.d(TAG, "没有网络");
+        }
     }
 
-    public void afxSendMessage(final String msg){
+    public void afxSendMessage(final String msg) {
         if (fixedThreadPool != null) {
             fixedThreadPool.submit(new Runnable() {
                 @Override
@@ -162,6 +293,7 @@ public class Connector {
             });
         }
     }
+
     public void sendMessage(String msg) {
         if (connectedByTCP == null || !connectedByTCP.isWork()) {
             mConnectRunnable.run();
@@ -212,6 +344,8 @@ public class Connector {
         @Override
         public void connectedSuccess(ConnectedByTCP connectedByTCP) {
             Log.d(TAG, "连接服务器成功");
+
+
         }
 
         @Override
@@ -260,8 +394,7 @@ public class Connector {
 
         @Override
         public void disconnected(String uuid) {
-
-
+            mListener.disconnected(uuid);
         }
 
         @Override
@@ -288,9 +421,9 @@ public class Connector {
                 int type = (int) attr.get("type");
                 switch (type) {
                     case MessageManager.TYPE_VOICE:
-                        if(attr.containsKey("delay")){
-                            Log.d(TAG, "数据延时："+ String.valueOf((long)attr.get("delay")));
-                            TelePhone.getInstance().setDelayTime((long)attr.get("delay"));
+                        if (attr.containsKey("delay")) {
+                            Log.d(TAG, "数据延时：" + String.valueOf((long) attr.get("delay")));
+                            TelePhone.getInstance().setDelayTime((long) attr.get("delay"));
                         }
                         OnReceiveVoice((byte[]) attr.get(MessageManager.getTagName(MessageManager.TAG_VOICE)));
                         break;
@@ -312,7 +445,7 @@ public class Connector {
                                             sendMessage(ip, packet.getPort(), MessageManager.udpP2P(cacheRepository.getDeviceId()));
                                         }
                                         cacheRepository.setP2PConnectSuccess(true);
-                                        OnReceiveP2P(device_id, ip, packet.getPort());
+                                        mListener.receviceP2P(device_id, ip, packet.getPort());
                                     }
                                 } else {
                                     mP2pConnetTime = System.currentTimeMillis();
@@ -323,7 +456,7 @@ public class Connector {
                                         sendMessage(ip, packet.getPort(), MessageManager.udpP2P(cacheRepository.getDeviceId()));
                                     }
                                     cacheRepository.setP2PConnectSuccess(true);
-                                    OnReceiveP2P(device_id, ip, packet.getPort());
+                                    mListener.receviceP2P(device_id, ip, packet.getPort());
                                 }
                             }
                         }
@@ -357,7 +490,7 @@ public class Connector {
             if (dateMap.containsKey(MessageHeader.Param.REMOTE_PORT)) {
                 cacheRepository.setRemoteUdpPort((Integer) dateMap.get(MessageHeader.Param.REMOTE_PORT));
             }
-            OnLoginSuccess();
+            mListener.loginSuccess();
         }
     }
 
@@ -397,7 +530,7 @@ public class Connector {
                 deviceModel.setLocalUdpPort(Integer.valueOf(dataMap.get(MessageHeader.Param.LOCAL_UDP_PORT)));
             }
             CacheRepository.getInstance().setTalkWithDevice(deviceModel);
-            TelePhone.getInstance().beCall(id, new TelePhoneAPI.BaseCallBackAdapter(){
+            TelePhone.getInstance().beCall(id, new TelePhoneAPI.BaseCallBackAdapter() {
                 @Override
                 public void isBusy() {
                     super.isBusy();
@@ -462,7 +595,7 @@ public class Connector {
             }
             //Tip 唤醒界面
             if (TelePhone.getInstance().getStatus() == TelePhone.Status.CALLED) {
-                OnBeCalled(CacheRepository.getInstance().getTalkWithDevice());
+                mListener.beCalled(CacheRepository.getInstance().getTalkWithDevice());
             }
             TelePhone.getInstance().checkUdpSuccess();
         }
@@ -472,7 +605,7 @@ public class Connector {
         String id = tranfor.getMessageHeader().getFrom();
         if (tranfor.getMessageHeader().getDeslist().contains(CacheRepository.getInstance().getDeviceId())) {
             //TODO 处理其他事
-            OnHandUp(tranfor);
+            mListener.handUp(tranfor);
         }
     }
 
@@ -480,7 +613,7 @@ public class Connector {
         String id = tranfor.getMessageHeader().getFrom();
         if (tranfor.getMessageHeader().getDeslist().contains(CacheRepository.getInstance().getDeviceId())) {
             //TODO 处理其他事
-            OnPickUp(tranfor);
+            mListener.pickUp(tranfor);
         }
     }
 
@@ -511,6 +644,8 @@ public class Connector {
     public interface OnConnectorListener {
         void connectSuccess();
 
+        void disconnected(String mid);
+
         void loginSuccess();
 
         void receviceP2P(String device_id, String ip, int port);
@@ -522,78 +657,124 @@ public class Connector {
         void handUp(Transinformation tranfor);
     }
 
-    private void OnConnectSuccess() {
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).connectSuccess();
-        } else if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).connectSuccess();
-        }
-//        Iterator<Entry<String, OnConnectorListener>> iterator = mListeners.entrySet().iterator();
-//        while (iterator.hasNext()) {
-//            Entry<String, OnConnectorListener> entity = iterator.next();
-//            try {
-//                Method method = entity.getClass().getMethod(methodName);
-//                method.invoke(entity, tranfor);
-//            } catch (IllegalAccessException e) {
-//                e.printStackTrace();
-//            } catch (InvocationTargetException e) {
-//                e.printStackTrace();
-//            } catch (NoSuchMethodException e) {
-//                e.printStackTrace();
-//            }
-//        }
-    }
+    static public class OnConnectorListenerAdapter implements OnConnectorListener {
+        @Override
+        public void connectSuccess() {
 
-    private void OnLoginSuccess() {
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).loginSuccess();
         }
-        if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).loginSuccess();
-        }
-    }
 
-    private void OnBeCalled(DeviceModel deviceModel) {
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).beCalled(deviceModel);
+        @Override
+        public void disconnected(String mid) {
+
         }
-        if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).beCalled(deviceModel);
+
+        @Override
+        public void loginSuccess() {
+
+        }
+
+        @Override
+        public void receviceP2P(String device_id, String ip, int port) {
+
+        }
+
+        @Override
+        public void beCalled(DeviceModel deviceModel) {
+
+        }
+
+        @Override
+        public void pickUp(Transinformation tranfor) {
+
+        }
+
+        @Override
+        public void handUp(Transinformation tranfor) {
+
         }
     }
 
-    private void OnPickUp(Transinformation tranfor) {
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).pickUp(tranfor);
-        }
-        if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).pickUp(tranfor);
-        }
-        TelePhone.getInstance().canTalk();
-    }
+    private OnConnectorListener mListener = new OnConnectorListener() {
+        @Override
+        public void connectSuccess() {
 
-    private void OnHandUp(Transinformation tranfor) {
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).handUp(tranfor);
         }
-        if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).handUp(tranfor);
-        }
-        TelePhone.getInstance().stop();
-    }
 
-    private void OnReceiveVoice(byte[] buf) {
-        TelePhone.getInstance().play(buf);
-    }
+        @Override
+        public void disconnected(String mid) {
+            Iterator<Map.Entry<String, OnConnectorListener>> iterator = mListenerMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, OnConnectorListener> entity = iterator.next();
+                OnConnectorListener value = entity.getValue();
+                if (value != null) {
+                    value.disconnected(mid);
+                }
+            }
+        }
 
-    private void OnReceiveP2P(String device_id, String ip, int port) {
-        Log.d(TAG, "P2P连接成功,对方设备：" + device_id);
-        if (mListeners.containsKey(LISTENER_PRESENTER)) {
-            mListeners.get(LISTENER_PRESENTER).receviceP2P(device_id, ip, port);
+        @Override
+        public void loginSuccess() {
+            Iterator<Map.Entry<String, OnConnectorListener>> iterator = mListenerMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, OnConnectorListener> entity = iterator.next();
+                OnConnectorListener value = entity.getValue();
+                if (value != null) {
+                    value.loginSuccess();
+                }
+            }
         }
-        if (mListeners.containsKey(LISTENER_SERVICE)) {
-            mListeners.get(LISTENER_SERVICE).receviceP2P(device_id, ip, port);
+
+        @Override
+        public void receviceP2P(String device_id, String ip, int port) {
+            Log.d(TAG, "P2P连接成功,对方设备：" + device_id);
+            if (mListenerMap.containsKey(LISTENER_PRESENTER)) {
+                mListenerMap.get(LISTENER_PRESENTER).receviceP2P(device_id, ip, port);
+            }
+            if (mListenerMap.containsKey(LISTENER_SERVICE)) {
+                mListenerMap.get(LISTENER_SERVICE).receviceP2P(device_id, ip, port);
+            }
         }
+
+        @Override
+        public void beCalled(DeviceModel deviceModel) {
+            if (mListenerMap.containsKey(LISTENER_PRESENTER)) {
+                mListenerMap.get(LISTENER_PRESENTER).beCalled(deviceModel);
+            }
+            if (mListenerMap.containsKey(LISTENER_SERVICE)) {
+                mListenerMap.get(LISTENER_SERVICE).beCalled(deviceModel);
+            }
+        }
+
+        @Override
+        public void pickUp(Transinformation tranfor) {
+            if (mListenerMap.containsKey(LISTENER_PRESENTER)) {
+                mListenerMap.get(LISTENER_PRESENTER).pickUp(tranfor);
+            }
+            if (mListenerMap.containsKey(LISTENER_SERVICE)) {
+                mListenerMap.get(LISTENER_SERVICE).pickUp(tranfor);
+            }
+            TelePhone.getInstance().canTalk();
+        }
+
+        @Override
+        public void handUp(Transinformation tranfor) {
+            if (mListenerMap.containsKey(LISTENER_PRESENTER)) {
+                mListenerMap.get(LISTENER_PRESENTER).handUp(tranfor);
+            }
+            if (mListenerMap.containsKey(LISTENER_SERVICE)) {
+                mListenerMap.get(LISTENER_SERVICE).handUp(tranfor);
+            }
+            TelePhone.getInstance().stop();
+        }
+    };
+
+    private void OnReceiveVoice(final byte[] buf) {
+        fixedThreadPool.submit(new Runnable() {
+            @Override
+            public void run() {
+                TelePhone.getInstance().play(buf);
+            }
+        });
     }
 
     @Override

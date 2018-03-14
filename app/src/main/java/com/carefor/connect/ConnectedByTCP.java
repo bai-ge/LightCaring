@@ -121,7 +121,7 @@ public class ConnectedByTCP {
 	}
 
 	public boolean isWork() {
-		return mIsWork && (System.currentTimeMillis() - mReceiveTime) < 60 * 1000;
+		return mIsWork && (System.currentTimeMillis() - mReceiveTime) < 40 * 1000;
 	}
 
 	public void setIsWork(boolean isWork) {

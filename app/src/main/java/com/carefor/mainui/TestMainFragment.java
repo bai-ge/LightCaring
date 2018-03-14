@@ -163,4 +163,19 @@ public class TestMainFragment extends Fragment implements MainContract.View {
     public void showEmUser(User user) {
 
     }
+
+    @Override
+    public void showInform(String text) {
+
+    }
+
+    @Override
+    public void showInform(String text, long time) {
+
+    }
+
+    @Override
+    public void hideInform() {
+
+    }
 }

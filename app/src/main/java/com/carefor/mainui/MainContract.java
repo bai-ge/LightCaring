@@ -13,9 +13,13 @@ public interface MainContract {
         void skipToActivity(Class content);
         void showDrawer();
         void callTo();
+        void stop();
 
     }
     interface View extends BaseView<Presenter>{
         void showEmUser(User user);
+        void showInform(String text);
+        void showInform(String text, long time);
+        void hideInform();
     }
 }

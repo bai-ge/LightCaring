@@ -1,6 +1,6 @@
 package com.carefor.mainui;
 
-import com.carefor.connect.ConnectService;
+import com.carefor.connect.Connector;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.login.LoginActivity;
@@ -14,6 +14,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 
 public class MainPresenter implements MainContract.Presenter {
+
+    private final static String TAG = MainFragment.class.getCanonicalName();
 
     private MainFragment mFragment;
 
@@ -40,13 +42,42 @@ public class MainPresenter implements MainContract.Presenter {
                 mListener.startActivity(LoginActivity.class);
             }
         }
-        if(mListener != null ){
-            mListener.startService(ConnectService.class);
+
+        if(cacheRepository.getSelectUser() != null){
+            mFragment.showEmUser(cacheRepository.getSelectUser());
         }
-        if(cacheRepository.getEmergencyUser() != null){
-            mFragment.showEmUser(cacheRepository.getEmergencyUser());
+        if(!Connector.getInstance().isConnectServer()){
+            mFragment.showInform("您已处于离线状态");
+        }else{
+            mFragment.hideInform();
         }
+        Connector.getInstance().RegistConnectorListener(TAG, mConnectorListener );
+
     }
+
+    @Override
+    public void stop() {
+        Connector.getInstance().unRegistConnectorListener(TAG);
+    }
+
+    private Connector.OnConnectorListenerAdapter mConnectorListener = new Connector.OnConnectorListenerAdapter(){
+        @Override
+        public void connectSuccess() {
+            super.connectSuccess();
+        }
+
+        @Override
+        public void loginSuccess() {
+            super.loginSuccess();
+            mFragment.showInform("服务器连接成功", 5000);
+        }
+
+        @Override
+        public void disconnected(String mid) {
+            super.disconnected(mid);
+            mFragment.showInform("您已处于离线状态");
+        }
+    };
 
     @Override
     public void skipToActivity(Class content) {

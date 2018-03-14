@@ -5,18 +5,20 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.baidu.mapapi.model.LatLng;
 import com.carefor.connect.Connector;
 import com.carefor.data.entity.DeviceModel;
+import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
 import com.carefor.membermanage.MemberInfo;
 import com.carefor.setting.SettingActivity;
 import com.carefor.util.JPushTools;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 
 import cn.jpush.android.api.JPushInterface;
 
@@ -44,7 +46,7 @@ public class CacheRepository {
     private DeviceModel mTalkWithDevice = null;
 
     //紧急联系人 TODO 取消上面的mTalkWith
-    private User mEmergencyUser = null; //应至少保证name、tel 、device_id准确
+    private User mSelectUser = null; //应至少保证id、name、tel 、device_id准确
 
     private boolean mP2PConnectSuccess = false;
     private String mP2PIp = "";
@@ -67,11 +69,27 @@ public class CacheRepository {
     private boolean mIsLogin = false;
     private User mLoginUser = null;
 
+    //闹铃URI
+    private String mRingUri;
+
 
     private Map<String, DeviceModel> mCacheddevices;
 
     //监护人或被监护人列表
     private List<MemberInfo> mMemberInfoList;
+
+
+
+    //定位相关数据
+    private float mCurrentAccracy; //精度(不需要保存)
+    private double mCurrentLat = 0.0;//维度
+    private double mCurrentLon = 0.0; //经度
+
+    private List<Location> mDesLocation = new ArrayList<>(); //服务器返回的位置信息，最多保存500个
+    private List<LatLng> mSelPoints = new ArrayList<>(); //目标轨迹
+    private List<LatLng> mMyPoints = new ArrayList<>();//自己的轨迹
+
+
 
 
     private CacheRepository() {
@@ -109,14 +127,18 @@ public class CacheRepository {
             mServerIp = ip;
             Connector.getInstance().afxConnectServer();
         }
-        if (mEmergencyUser == null) {
+        if (mSelectUser == null) {
             String tel = preferences.getString(SettingActivity.KEY_PHONE, "");
             String em_name = preferences.getString("emergency_name", "");
             mTalkWith = preferences.getString("emergency_device_id", "");
-            mEmergencyUser = new User();
-            mEmergencyUser.setDeviceId(mTalkWith);
-            mEmergencyUser.setName(em_name);
-            mEmergencyUser.setTel(tel);
+            mSelectUser = new User();
+            mSelectUser.setDeviceId(mTalkWith);
+            mSelectUser.setName(em_name);
+            mSelectUser.setTel(tel);
+            if(preferences.contains("select_id")){
+                int id = preferences.getInt("select_id", 0);
+                mSelectUser.setUid(id);
+            }
         }
         isNeedOpenGuidepage = preferences.getBoolean("guide_page", true);
         String name = preferences.getString(SettingActivity.KEY_NAME, "");
@@ -129,6 +151,10 @@ public class CacheRepository {
             mLoginUser = new User(name, pas);
         }
         mLoginUser.setDeviceId(mDeviceId);
+        mRingUri = preferences.getString(SettingActivity.KEY_ALERT, "");
+        //定位
+        mCurrentLat = preferences.getFloat("current_lat", 116.40399f);
+        mCurrentLon = preferences.getFloat("current_lon", 39.915087f);
         Log.d("save", "读取配置" + mLoginUser);
     }
 
@@ -149,15 +175,20 @@ public class CacheRepository {
         // editor.putString(SettingActivity.KEY_UDP_PORT, ""+mServerUdpPort);
         //后面换成紧急联系人
         editor.putString(SettingActivity.KEY_PHONE, mTalkWith);
-        if (mEmergencyUser != null) {
-            editor.putString(SettingActivity.KEY_PHONE, mEmergencyUser.getTel());
-            editor.putString("emergency_name", mEmergencyUser.getName());
-            editor.putString("emergency_device_id", mEmergencyUser.getDeviceId());
+        if (mSelectUser != null) {
+            editor.putInt("select_id", mSelectUser.getUid());
+            editor.putString(SettingActivity.KEY_PHONE, mSelectUser.getTel());
+            editor.putString("emergency_name", mSelectUser.getName());
+            editor.putString("emergency_device_id", mSelectUser.getDeviceId());
         }
+
+        //定位
+        editor.putFloat("current_lat", (float) mCurrentLat);
+        editor.putFloat("current_lon", (float) mCurrentLon);
 
         editor.commit();
         Log.d("save", "保存配置" + mLoginUser);
-        Log.d("save", "紧急联系人" + mEmergencyUser);
+        Log.d("save", "紧急联系人" + mSelectUser);
     }
 
     public String getServerIp() {
@@ -280,6 +311,10 @@ public class CacheRepository {
         return mTalkWithDevice;
     }
 
+    public String getRingUri() {
+        return mRingUri;
+    }
+
     public void setTalkWithDevice(DeviceModel mTalkWithDevice) {
         this.mTalkWithDevice = mTalkWithDevice;
     }
@@ -293,12 +328,64 @@ public class CacheRepository {
         this.mMemberInfoList = mMemberInfoList;
     }
 
-    public User getEmergencyUser() {
-        return mEmergencyUser;
+    public User getSelectUser() {
+        return mSelectUser;
     }
 
-    public void setEmergencyUser(User mEmergencyUser) {
-        this.mEmergencyUser = mEmergencyUser;
+    public void setSelectUser(User mEmergencyUser) {
+        this.mSelectUser = mEmergencyUser;
+    }
+
+
+    /*
+    * ****************************** 定位相关
+    * */
+    public float getCurrentAccracy() {
+        return mCurrentAccracy;
+    }
+
+    public void setCurrentAccracy(float accracy) {
+        this.mCurrentAccracy = accracy;
+    }
+
+    public double getCurrentLat() {
+        return mCurrentLat;
+    }
+
+    public void setCurrentLat(double lat) {
+        this.mCurrentLat = lat;
+    }
+
+    public double getCurrentLon() {
+        return mCurrentLon;
+    }
+
+    public void setCurrentLon(double lon) {
+        this.mCurrentLon = lon;
+    }
+
+    public List<Location> getDesLocation() {
+        return mDesLocation;
+    }
+
+    public void setDesLocation(List<Location> mDesLocation) {
+        this.mDesLocation = mDesLocation;
+    }
+
+    public List<LatLng> getSelPoints() {
+        return mSelPoints;
+    }
+
+    public void setSelPoints(List<LatLng> mSelPoints) {
+        this.mSelPoints = mSelPoints;
+    }
+
+    public List<LatLng> getMyPoints() {
+        return mMyPoints;
+    }
+
+    public void setMyPoints(List<LatLng> mMyPoints) {
+        this.mMyPoints = mMyPoints;
     }
 
     public User who() {
@@ -313,4 +400,6 @@ public class CacheRepository {
     public void setYouself(User user) {
         this.mLoginUser = user;
     }
+
+
 }

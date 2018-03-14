@@ -202,6 +202,7 @@ public class SettingActivity extends PreferenceActivity implements SharedPrefere
             Toast.makeText(this, "newValue="+newValue, Toast.LENGTH_SHORT).show();
             Log.d(TAG, newValue.toString());
             setRingtonePreference((String)newValue);
+
             String ringtongTitle = getRingtoneTitleFromUri((String)newValue);
             mRingtone.setSummary(ringtongTitle);
         }

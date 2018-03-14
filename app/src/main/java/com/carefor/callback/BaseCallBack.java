@@ -59,5 +59,10 @@ public abstract class BaseCallBack implements ServerHelper.PrimaryCallBack, Serv
         }
     }
 
+    public void drop(){
+        stopTimer();
+        CallbackManager.getInstance().remote(id);
+    }
+
     public abstract void setResponseBinder(AbstractResponseBinder responseBinder);
 }

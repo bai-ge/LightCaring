@@ -1,6 +1,7 @@
 package com.carefor.location;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -9,12 +10,25 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
+import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.utils.DistanceUtil;
+import com.carefor.callback.SeniorCallBack;
+import com.carefor.data.source.Repository;
+import com.carefor.data.source.cache.CacheRepository;
+import com.carefor.data.source.local.LocalRepository;
+import com.carefor.data.source.remote.Parm;
 import com.carefor.util.Tools;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 
@@ -31,6 +45,13 @@ public class LocationService {
 	private LocationClient client = null;
 	private LocationClientOption mOption,DIYoption;
 	private Object objLock = new Object();
+    private long mLimiteTime;
+    private Timer mTimer;
+
+    private BDLocation mRecentLocation;
+    private long mRefreshTime;
+
+    private LinkedList<LocationEntity> mLocationList = new LinkedList<LocationEntity>(); // 存放历史定位结果的链表，最大存放当前结果的前5次定位结果
 
     public static float[] EARTH_WEIGHT = {0.1f,0.2f,0.4f,0.6f,0.8f}; // 推算计算权重_地球
 
@@ -58,6 +79,50 @@ public class LocationService {
             }
         }
         return INSTANCE;
+    }
+
+    public void autoPostLocation(final Context context, long time){
+        if(time < 0){
+            time = 9 * 60 * 1000;
+        }
+        mLimiteTime = System.currentTimeMillis() + time;
+        if(mTimer != null){
+            mTimer.cancel();
+        }
+        mTimer = new Timer();
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                long now = System.currentTimeMillis();
+                Log.d(TAG, "自动上传位置");
+                if(now > mLimiteTime ){
+                    mTimer.cancel();
+                    stop();
+                }
+                if(now - mRefreshTime >= 10000){
+                    requestLocation();//更新位置
+                }else{
+                    JSONObject json = new JSONObject();
+                    String loc = new String();
+                    try {
+                        json.put(Parm.LNG, mRecentLocation.getLongitude());
+                        json.put(Parm.LAT, mRecentLocation.getLatitude());
+                        json.put(Parm.LOCATION, mRecentLocation.getAddrStr());//大致位置
+                        json.put(Parm.TITLE, mRecentLocation.getLocationDescribe());//详细位置
+                        json.put(Parm.TIME, String.valueOf(mRefreshTime));
+                        loc = json.toString();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    if(!Tools.isEmpty(loc)){
+                        CacheRepository cacheRepository = CacheRepository.getInstance();
+                        Repository repository = Repository.getInstance(LocalRepository.getInstance(context));
+                        repository.asynUploadLocation(cacheRepository.who().getUid(), loc, mRefreshTime, new SeniorCallBack());
+                    }
+                }
+            }
+        };
+        mTimer.schedule(timerTask,  0,  10000);
     }
 
 	/***
@@ -198,6 +263,11 @@ public class LocationService {
         @Override
         public void onReceiveLocation(BDLocation bdLocation) {
             if (bdLocation != null && (bdLocation.getLocType() == 161 || bdLocation.getLocType() == 66 || bdLocation.getLocType() == 61)) {
+                Algorithm(bdLocation);//根据速度推算出结果
+                if(bdLocation.getRadius() <= 50){
+                    mRecentLocation =  bdLocation;
+                    mRefreshTime = System.currentTimeMillis();
+                }
                 Iterator<Map.Entry<String, BDLocationListener>> it = mListenersMap.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry<String, BDLocationListener> entry = it.next();
@@ -209,5 +279,67 @@ public class LocationService {
             }
         }
     };
-	
+
+    /***
+     * 平滑策略代码实现方法，主要通过对新定位和历史定位结果进行速度评分，
+     * 来判断新定位结果的抖动幅度，如果超过经验值，则判定为过大抖动，进行平滑处理,若速度过快，
+     * 则推测有可能是由于运动速度本身造成的，则不进行低速平滑处理 ╭(●｀∀´●)╯
+     *
+     * @param location
+     * @return Bundle
+     */
+    private Bundle Algorithm(BDLocation location) {
+        Bundle locData = new Bundle();
+        double curSpeed = 0;
+        if (mLocationList.isEmpty() || mLocationList.size() < 2) {
+            LocationEntity temp = new LocationEntity();
+            temp.location = location;
+            temp.time = System.currentTimeMillis();
+            locData.putInt("iscalculate", 0);
+            if(location.getRadius() <= 50){ //精度
+                mLocationList.add(temp);
+            }
+        } else {
+            if (mLocationList.size() > 5)
+                mLocationList.removeFirst();
+            double score = 0;
+            for (int i = 0; i < mLocationList.size(); ++i) {
+                LatLng lastPoint = new LatLng(mLocationList.get(i).location.getLatitude(),
+                        mLocationList.get(i).location.getLongitude());
+                LatLng curPoint = new LatLng(location.getLatitude(), location.getLongitude());
+                double distance = DistanceUtil.getDistance(lastPoint, curPoint);
+                curSpeed = distance / (System.currentTimeMillis() - mLocationList.get(i).time) / 1000;
+                score += curSpeed * LocationService.EARTH_WEIGHT[i];
+            }
+            if (score > 0.00000999 && score < 0.00005) { // 经验值,开发者可根据业务自行调整，也可以不使用这种算法
+                location.setLongitude(
+                        (mLocationList.get(mLocationList.size() - 1).location.getLongitude() + location.getLongitude())
+                                / 2);
+                location.setLatitude(
+                        (mLocationList.get(mLocationList.size() - 1).location.getLatitude() + location.getLatitude())
+                                / 2);
+                locData.putInt("iscalculate", 1);
+            } else {
+                locData.putInt("iscalculate", 0);
+            }
+            LocationEntity newLocation = new LocationEntity();
+            newLocation.location = location;
+            newLocation.time = System.currentTimeMillis();
+            if(location.getRadius() <= 50){ //精度
+                mLocationList.add(newLocation);
+            }
+        }
+        return locData;
+    }
+
+    /**
+     * 封装定位结果和时间的实体类
+     *
+     * @author baidu
+     *
+     */
+    class LocationEntity {
+        BDLocation location;
+        long time;
+    }
 }

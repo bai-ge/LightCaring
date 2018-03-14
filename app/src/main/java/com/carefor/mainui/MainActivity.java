@@ -23,8 +23,6 @@ import android.widget.Toast;
 
 import com.carefor.BaseActivity;
 import com.carefor.about.AboutActivity;
-import com.carefor.connect.ConnectService;
-import com.carefor.connect.HeartBeatService;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.LocalRepository;
@@ -32,11 +30,11 @@ import com.carefor.login.LoginActivity;
 import com.carefor.membermanage.MemberManageActivity;
 import com.carefor.setting.SettingActivity;
 import com.carefor.util.ActivityUtils;
+import com.carefor.util.Loggerx;
 import com.carefor.util.Tools;
 
 import java.util.ArrayList;
 
-import cn.jpush.android.api.JPushInterface;
 
 
 public class MainActivity extends BaseActivity {
@@ -49,7 +47,6 @@ public class MainActivity extends BaseActivity {
 
     private Toast mToast;
 
-    private ConnectService.ConnectBinder mBinder = null;
 
     private final int SDK_PERMISSION_REQUEST = 127;
 
@@ -57,18 +54,6 @@ public class MainActivity extends BaseActivity {
 
 
 
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mBinder = (ConnectService.ConnectBinder) service;
-            Log.d("Service", "servic is bind");
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d("Service", "servic disconected");
-        }
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,19 +76,11 @@ public class MainActivity extends BaseActivity {
         if (mNavigationView != null) {
             setupDrawerContent(mNavigationView);
         }
-        //初始化极光推送
-        JPushInterface.setDebugMode(true);
-        String text = JPushInterface.getRegistrationID(this);
-        Log.d("JPush", "初始化之前"+text);
-        JPushInterface.init(this);
-        text = JPushInterface.getRegistrationID(this);
-        Log.d("JPush", "初始化之后"+text);
+
 
         CacheRepository cacheRepository = CacheRepository.getInstance();
         cacheRepository.readConfig(this);
 
-        Intent intent = new Intent(MainActivity.this, HeartBeatService.class);
-        startService(intent);//调用onStartCommand()
 
         MainFragment mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
         if (mainFragment == null) {
@@ -122,6 +99,8 @@ public class MainActivity extends BaseActivity {
 
         getPersimmions();
 
+        Intent intent1 = new Intent(this, DaemonService.class);
+        startService(intent1);
         Log.d("guide_page", "启动主页面");
     }
     @TargetApi(23)
@@ -144,6 +123,8 @@ public class MainActivity extends BaseActivity {
             // 读写权限，必须要
             if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 permissions.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }else{
+                Loggerx.bWriteToFile = true;
             }
 
             // 读取电话状态权限，必须要
@@ -201,6 +182,13 @@ public class MainActivity extends BaseActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         // TODO Auto-generated method stub
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //确保读写文件权限有效
+        for (int i = 0; i < permissions.length ; i++) {
+            if(permissions[i].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE) &&
+                    grantResults[i] == PackageManager.PERMISSION_GRANTED){
+                Loggerx.bWriteToFile = true;
+            }
+        }
     }
 
 

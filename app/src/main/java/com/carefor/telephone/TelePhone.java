@@ -1,12 +1,19 @@
 package com.carefor.telephone;
 
 
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.util.Log;
 
 import com.carefor.connect.Connector;
 import com.carefor.connect.MessageManager;
 import com.carefor.data.entity.DeviceModel;
 import com.carefor.data.source.cache.CacheRepository;
+import com.carefor.util.Tools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,11 +52,29 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
 
     private ByteBuffer voiceBuf;
 
+    private static MediaPlayer mMediaPlayer;
+
+    private Context mContext;
+
     private TelePhone() {
         mStatus = Status.LEISURE;
         isConnectServer = false;
         voiceBuf = ByteBuffer.allocate(20 * 10);
+        mMediaPlayer = new MediaPlayer();
         fixedThreadPool = Executors.newFixedThreadPool(5);//创建最多能并发运行5个线程的线程池
+
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mMediaPlayer.start();
+            }
+        });
+        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mMediaPlayer.start();
+            }
+        });
     }
 
     public static TelePhone getInstance() {
@@ -61,6 +86,10 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             }
         }
         return INSTANCE;
+    }
+
+    public void init(Context context){
+        mContext = checkNotNull(context);
     }
 
     public void setOnTelePhoneListener(OnTelePhoneListener listener) {
@@ -88,6 +117,37 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         }
     }
 
+    public void ring(Context context, Uri uri){
+        mMediaPlayer.reset();
+        try {
+            mMediaPlayer.setDataSource(context, uri);
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
+            mMediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+            ring();
+        }
+    }
+    public void ring(){
+        mMediaPlayer.reset();
+        try {
+            if(mContext == null){
+                new IllegalStateException("Telephone is not init");
+            }
+            AssetManager assetManager = mContext.getAssets();
+            AssetFileDescriptor fileDescriptor = assetManager.openFd("MI.ogg");
+            mMediaPlayer.setDataSource(fileDescriptor.getFileDescriptor(), fileDescriptor.getStartOffset(), fileDescriptor.getLength());
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
+            mMediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void stopRing(){
+        if(mMediaPlayer != null && mMediaPlayer.isPlaying()){
+            mMediaPlayer.stop();
+        }
+    }
     public int getStatus() {
         return mStatus;
     }
@@ -232,6 +292,12 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
         if (mStatus == Status.LEISURE) {
             mTalkWith = deviceId;
             setStatus(Status.CALLED);
+            String ringUri = CacheRepository.getInstance().getRingUri();
+            if(!Tools.isEmpty(ringUri)){
+                ring(mContext, Uri.parse(ringUri));
+            }else{
+                ring();
+            }
             checkUdpConnector();
         } else {
             showLog("错误状态, 当前" + mStatus);
@@ -294,6 +360,7 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     @Override
     public void onHangUp(BaseCallBack callBack) {
         checkNotNull(callBack);
+        stopRing();
         stop();
         Connector.getInstance().afxSendMessage(MessageManager.onHangUp(mTalkWith));
     }
@@ -301,6 +368,7 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     @Override
     public void onPickUp(BaseCallBack callBack) {
         checkNotNull(callBack);
+        stopRing();
         canTalk();
         Connector.getInstance().afxSendMessage(MessageManager.onPickUp(mTalkWith));
     }
@@ -330,6 +398,7 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     }
     public void stop() {
         synchronized (TelePhone.class) {
+            stopRing();
             if (mStatus == Status.BUSY) {
                 if (recorder != null) {
                     recorder.stop();    // 停止录音
