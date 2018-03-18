@@ -94,9 +94,11 @@ public class FallService implements SensorEventListener{
     public void start(){
         isRunning = true;
         reset();
+        mListener.onRunningChange(isRunning);
     }
     public void stop(){
         isRunning = false;
+        mListener.onRunningChange(isRunning);
     }
     public void reset(){
         svmCount = 0;
@@ -226,6 +228,18 @@ public class FallService implements SensorEventListener{
                 }
             }
         }
+
+        @Override
+        public void onRunningChange(boolean isRunning) {
+            Iterator<Map.Entry<String, OnFallServiceListener>> it = mListenerMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, OnFallServiceListener> entry = it.next();
+                OnFallServiceListener listener = entry.getValue();
+                if (listener != null) {
+                    listener.onRunningChange(isRunning);
+                }
+            }
+        }
     };
 
     @Override
@@ -236,6 +250,7 @@ public class FallService implements SensorEventListener{
     interface OnFallServiceListener{
         void onAccelerometerChanged(float accX, float accY, float accZ);
         void onFall();
+        void onRunningChange(boolean isRunning);
     }
 
 }

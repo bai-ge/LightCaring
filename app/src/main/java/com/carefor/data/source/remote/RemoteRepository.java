@@ -436,4 +436,17 @@ public class RemoteRepository implements DataSource, ServerHelper {
             callBack.error(e);
         }
     }
+
+    @Override
+    public void informTumble(int bgid, BaseCallBack callBack) {
+        String url = serverAddress + "/api/services/transmission/tumble";
+        JSONObject json = new JSONObject();
+        try {
+            json.put(Parm.PUP_ID, String.valueOf(bgid));
+            HttpURLPost(url, json.toString(), callBack);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callBack.error(e);
+        }
+    }
 }

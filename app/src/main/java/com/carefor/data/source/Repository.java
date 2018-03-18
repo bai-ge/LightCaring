@@ -548,7 +548,30 @@ public class Repository implements DataSource, ServerHelper {
             });
         }
     }
-/*
+
+    @Override
+    public void informTumble(int bgid, BaseCallBack callBack) {
+        checkNotNull(callBack);
+        callBack.setResponseBinder(mSimpleResponseBinder);
+
+        if (mRemoteRepository == null) {
+            callBack.fail();
+        } else {
+            mRemoteRepository.informTumble(bgid, callBack);
+        }
+    }
+
+    public void asynInformTumble(final int bgid, final BaseCallBack callBack) {
+        if (fixedThreadPool != null) {
+            fixedThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    informTumble(bgid, callBack);
+                }
+            });
+        }
+    }
+    /*
     class SimpleServerCallBack implements ServerHelper.ServerCallBack{
         ServerAPI.BaseCallBack mCallBack;
 

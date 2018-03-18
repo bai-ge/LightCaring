@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.carefor.data.entity.Housekeeping;
 import com.carefor.data.entity.User;
 import com.carefor.dropdetection.DropDetectionActivity;
+import com.carefor.drugalarm.DrugAlarmActivity;
 import com.carefor.housekeeping.HousekeepingActivity;
 import com.carefor.location.LocationActivity;
 import com.carefor.telephone.PhoneActivity;
@@ -108,10 +109,12 @@ public class MainFragment extends Fragment implements MainContract.View {
                 mPresenter.skipToActivity(HousekeepingActivity.class);
             }
         });
+        //吃药提醒
         root.findViewById(R.id.btn_remind).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showTip(((ItemCardView)v).getText().toString());
+                mPresenter.skipToActivity(DrugAlarmActivity.class);
             }
         });
         root.findViewById(R.id.btn_sos).setOnClickListener(new View.OnClickListener() {
@@ -121,6 +124,7 @@ public class MainFragment extends Fragment implements MainContract.View {
                 Loggerx.d(TAG, ((ItemCardView)v).getText().toString());
             }
         });
+
         hideInform();
 
 //        root.findViewById(R.id.btn_jpush).setOnClickListener(new View.OnClickListener() {

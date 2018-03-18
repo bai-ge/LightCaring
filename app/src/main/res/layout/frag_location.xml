@@ -3,9 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/colorPrimaryDark"
     android:orientation="vertical">
 
+    <!--详细位置-->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -24,16 +25,18 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/color_white"
                 />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <Button
+                    android:id="@+id/btn_ask_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="请求位置">
+                </Button>
+            </LinearLayout>
 
         </LinearLayout>
-        <Button
-            android:id="@+id/btn_location"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:background="@drawable/ic_gps"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="@dimen/fab_margin"/>
     </RelativeLayout>
 
 
@@ -43,12 +46,27 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
+        <!--地图区域-->
         <com.baidu.mapapi.map.MapView
             android:id="@+id/map_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
         </com.baidu.mapapi.map.MapView>
+
+        <!--通知栏-->
+        <LinearLayout
+            android:id="@+id/inform_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/yellow">
+            <TextView
+                android:id="@+id/inform_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="正在定位……"/>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -71,6 +89,30 @@
                 android:layout_marginLeft="5dp">
 
             </View>
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/fab_margin"
+            android:orientation="vertical">
+            <!--目标请求-->
+            <Button
+                android:id="@+id/btn_destination"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/btn_alpha"/>
+
+            <Button
+                android:id="@+id/btn_track"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_show_track"/>
+
         </LinearLayout>
 
 

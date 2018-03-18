@@ -108,6 +108,8 @@ public interface ServerHelper {
 
     void sendMessageTo(int from, int to, String message, BaseCallBack callBack);
 
+    void informTumble(int bgid, BaseCallBack callBack);
+
 
 
 }

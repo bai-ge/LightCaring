@@ -58,8 +58,34 @@ public class DropDetectionActivity extends BaseActivity {
             public void onFall() {
                 showTip("老人跌倒");
                 mSwitchButton.setChecked(false);
+                if(CacheRepository.getInstance().who().getType() == 2){
+                    mRepository.asynInformTumble(CacheRepository.getInstance().who().getUid(), new SeniorCallBack(){
+                        @Override
+                        public void success() {
+                            super.success();
+                            showTip("跌倒信息发送成功");
+                        }
+
+                        @Override
+                        public void fail() {
+                            super.fail();
+                            showTip("跌倒信息发送失败");
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onRunningChange(final boolean isRunning) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSwitchButton.setChecked(isRunning);
+                    }
+                });
             }
         }, TAG);
+
     }
 
     private void initView(){
@@ -85,7 +111,6 @@ public class DropDetectionActivity extends BaseActivity {
                 CacheRepository cacheRepository = CacheRepository.getInstance();
                 User user = cacheRepository.who();
                 if(user.getType() == 1){
-                    mFallService.stop();
                     ctrlDropSwitch(isChecked);
                 }else if(user.getType() == 2){
                     //TODO 被监护人无法直接设置跌倒监测
@@ -109,6 +134,7 @@ public class DropDetectionActivity extends BaseActivity {
         CacheRepository cacheRepository = CacheRepository.getInstance();
         User selUser = CacheRepository.getInstance().getSelectUser();
         if(cacheRepository.who().getType() == 1){
+            mFallService.stop();
             //显示被监护人
             if(selUser != null && !Tools.isEmpty(selUser.getName())){
                 mUserName.setText(selUser.getName() +"跌倒监测");

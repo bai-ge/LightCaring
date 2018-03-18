@@ -9,14 +9,7 @@ import android.util.Log;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
-import com.baidu.mapapi.model.LatLng;
-import com.carefor.callback.BaseCallBack;
-import com.carefor.callback.CallbackManager;
-import com.carefor.callback.SeniorCallBack;
-import com.carefor.data.entity.Location;
-import com.carefor.data.source.Repository;
-import com.carefor.data.source.cache.CacheRepository;
-import com.carefor.data.source.local.LocalRepository;
+
 import com.carefor.data.source.remote.Parm;
 import com.carefor.location.LocationActivity;
 import com.carefor.location.LocationService;
@@ -120,17 +113,39 @@ public class JPushReceiver extends BroadcastReceiver {
         final LocationService locationService = LocationService.getInstance(context);
         String message = bundle.getString(JPushInterface.EXTRA_MESSAGE);
         try {
-            final JSONObject jsonObject = new JSONObject(message);
+            JSONObject jsonObject = new JSONObject(message);
             Logger.d(TAG, "json : "+ jsonObject.toString());
 
             int msgType = 0;
-            long time = 0;
+            long time = System.currentTimeMillis();
             if(jsonObject.has(Parm.MESSAGE_TYPE)){
                 msgType = jsonObject.getInt(Parm.MESSAGE_TYPE);
             }
             if(jsonObject.has(Parm.TIME)){
                 time = Long.valueOf(jsonObject.getString(Parm.TIME));
             }
+
+            switch (msgType){
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case Parm.MSG_TYPE_ASK_LOCATION://获取位置请求
+                    JPushMessageProcess.processAskLocation(context, jsonObject, time);
+                    break;
+                case Parm.MSG_TYPE_LOCATION://得到位置反馈
+                    JPushMessageProcess.processReceiveLocation(context, jsonObject, time);
+                    break;
+                case Parm.MSG_TYPE_DROP_ASK:
+                    JPushMessageProcess.processAskDropSwitch(context, jsonObject, time);
+                    break;
+                case Parm.MSG_TYPE_DROP_SWITCH://监护人和被监护都可能会收到这个消息
+                    JPushMessageProcess.processSetDrepSwitch(context, jsonObject, time);
+                    break;
+                default:
+                    break;
+            }
+
             if(msgType > Parm.MSG_TYPE_CUSTOM){
 
                 if(jsonObject.has(Parm.Callback)){
@@ -139,100 +154,9 @@ public class JPushReceiver extends BroadcastReceiver {
                 Log.d(TAG, "收到自定义消息："+message);
 
             }
-            switch (msgType){
-                case 0:
-                    break;
-                case 1:
-                    break;
-                case 2://获取位置请求
-                    final int receiveUid = jsonObject.getInt(Parm.ROUTER);
-                    locationService.registerListener(TAG, new BDLocationListener() {
-                        @Override
-                        public void onReceiveLocation(BDLocation bdLocation) {
-                            Log.d(TAG, "接收到位置信息"+bdLocation);
-                            String address = bdLocation.getAddrStr();
-                            double  lat = bdLocation.getLatitude();
-                            double lng = bdLocation.getLongitude();
-                            String title = bdLocation.getLocationDescribe();
-                            JSONObject jsonContent = new JSONObject();
-
-                            try {
-                                jsonContent.put(Parm.MESSAGE_TYPE, String.valueOf(3));
-                                jsonContent.put(Parm.LOCATION, address);
-                                jsonContent.put(Parm.JWD, lng +","+ lat );
-                                jsonContent.put(Parm.TITLE, title);
-                                jsonContent.put(Parm.TIME, String.valueOf(System.currentTimeMillis()));
-                                if(jsonObject.has(Parm.Callback)){
-                                    jsonContent.put(Parm.Callback, jsonObject.get(Parm.Callback));
-                                }
-                                Repository repository = Repository.getInstance(LocalRepository.getInstance(context));
-                                CacheRepository cacheRepository = CacheRepository.getInstance();
-                                SeniorCallBack seniorCallBack = new SeniorCallBack(){
-                                    @Override
-                                    public void success() {
-                                        super.success();
-                                        Log.d(TAG, "success()");
-                                        locationService.unregisterListener(TAG);
-                                    }
-
-                                    @Override
-                                    public void fail() {
-                                        super.fail();
-                                        Log.d(TAG, "fail()");
-                                    }
-
-                                    @Override
-                                    public void unknown() {
-                                        super.unknown();
-                                        Log.d(TAG, "unknown()");
-                                    }
-                                };
-                                repository.asynReplyLocation(0, "我要告诉监护人，我的位置在哪", cacheRepository.who().getUid(), receiveUid, jsonContent.toString(), seniorCallBack );
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                    });
-                    locationService.requestLocation();
-                    locationService.autoPostLocation(context, 9 * 60 * 1000);
-                    break;
-                case 3://得到位置反馈
-                    if(jsonObject.has(Parm.Callback)){
-                        BaseCallBack baseCallBack = CallbackManager.getInstance().get(jsonObject.getString(Parm.Callback));
-                        if(baseCallBack != null && jsonObject.has(Parm.JWD)){
-                            String jwd = jsonObject.getString(Parm.JWD);
-                            String [] list = jwd.split(",");
-                            double lng = Double.valueOf(list[0]);
-                            double  lat = Double.valueOf(list[1]);
-
-                            StringBuffer des = new StringBuffer();
-
-                            if(jsonObject.has(Parm.LOCATION)){
-                                des.append(jsonObject.get(Parm.LOCATION)+"\n");
-                            }
-                            if(jsonObject.has(Parm.TITLE)){
-                                des.append(jsonObject.get(Parm.TITLE));
-                            }
-
-                            Location location = new Location();
-                            location.setTime(time);
-                            location.setLatLng(new LatLng(lat, lng));
-                            location.setDescription(des.toString());
-                            baseCallBack.loadLocation(location);
-                        }
-
-                    }
-
-                    break;
-                default:
-                    break;
-            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     private BDLocationListener mLocationListener = new BDLocationListener() {

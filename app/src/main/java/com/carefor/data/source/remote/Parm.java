@@ -81,9 +81,13 @@ public class Parm {
     public static final int TIMEOUT_CODE = 1004;
     public static final int INVALID_CODE = 1005;
 
+    public static final int MSG_TYPE_ASK_LOCATION = 2;
+    public static final int MSG_TYPE_LOCATION = 3;
+
     public static final int MSG_TYPE_CUSTOM = 100;
-    public static final int MSG_TYPE_DROP_ASK = MSG_TYPE_CUSTOM + 1; //询问是否打开摔倒检测
-    public static final int MSG_TYPE_DROP_SWITCH = MSG_TYPE_CUSTOM + 2; //返回结果
-    public static final int MSG_TYPE_DROP_MESSAGE = MSG_TYPE_CUSTOM + 3; //摔倒信息(包括时间，地点，人)
+    public static final int MSG_TYPE_BACK = MSG_TYPE_CUSTOM + 1;
+    public static final int MSG_TYPE_DROP_ASK = MSG_TYPE_CUSTOM + 2; //询问是否打开摔倒检测
+    public static final int MSG_TYPE_DROP_SWITCH = MSG_TYPE_CUSTOM + 3; //返回结果
+    public static final int MSG_TYPE_DROP_MESSAGE = MSG_TYPE_CUSTOM + 4; //摔倒信息(包括时间，地点，人)
 
 }
