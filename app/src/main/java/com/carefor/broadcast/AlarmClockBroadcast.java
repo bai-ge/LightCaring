@@ -3,7 +3,9 @@ package com.carefor.broadcast;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.carefor.data.entity.AlarmClock;
 import com.carefor.data.entity.DrugAlarmConstant;
@@ -11,6 +13,7 @@ import com.carefor.data.entity.DrugAlarmStatus;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.drugalarm.AlarmSoundActivity;
 import com.carefor.util.AlarmUtil;
+import com.carefor.util.Tools;
 
 /**
  * Created by Ryoko on 2018/3/7.
@@ -25,7 +28,14 @@ public class AlarmClockBroadcast extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        AlarmClock alarmClock = intent.getParcelableExtra(DrugAlarmConstant.ALARM_CLOCK);
+        byte[] alarmBuf = intent.getByteArrayExtra(DrugAlarmConstant.ALARM_CLOCK);
+        AlarmClock alarmClock =Tools.toParcelable(alarmBuf, AlarmClock.CREATOR);
+        Log.d(LOG_TAG, "intent =" + intent + ", intent.hash()=" + intent.hashCode());
+        Log.d(LOG_TAG, "接收到的：alarmClock" + alarmClock);
+        int alarm_Id = intent.getIntExtra(DrugAlarmConstant.ALARM_ID, 0);
+        Bundle bundle = intent.getExtras();
+        Log.d(LOG_TAG, "bundle = "+Tools.printBundle(bundle));
+        Log.d(LOG_TAG, "接收到的alarm_Id " + alarm_Id);
         if (alarmClock != null) {
             // 单次响铃
             if (alarmClock.getWeeks() == null) {

@@ -335,6 +335,11 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             }
         });
 
+        //TODO DEBUG
+        mBtnAskLocation.setVisibility(View.GONE);
+        mTxtLatLng.setVisibility(View.GONE);
+
+
     }
 
 

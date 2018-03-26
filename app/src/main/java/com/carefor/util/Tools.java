@@ -5,15 +5,26 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.carefor.connect.Connector;
+import com.example.jpushdemo.Logger;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.logging.SimpleFormatter;
+
+import cn.jpush.android.api.JPushInterface;
 
 /**
  * Created by baige on 2017/12/27.
@@ -151,5 +162,43 @@ public class Tools {
             Connector.getInstance().setWifiValid(false);
             Connector.getInstance().setNetworkValid(false);
         }
+    }
+
+    // 打印所有的 intent extra 数据
+    public static String printBundle(Bundle bundle) {
+        StringBuilder sb = new StringBuilder();
+        for (String key : bundle.keySet()) {
+            sb.append("\nkey:" + key + ", value:" + bundle.get(key));
+        }
+        return sb.toString();
+    }
+
+    public static byte[] toByteArray(Parcelable parcelable) {
+        Parcel parcel=Parcel.obtain();
+
+        parcelable.writeToParcel(parcel, 0);
+
+        byte[] result=parcel.marshall();
+
+        parcel.recycle();
+
+        return(result);
+    }
+
+    public static <T> T toParcelable(byte[] bytes,
+                                     Parcelable.Creator<T> creator) {
+        if(bytes == null){
+            return null;
+        }
+        Parcel parcel=Parcel.obtain();
+
+        parcel.unmarshall(bytes, 0, bytes.length);
+        parcel.setDataPosition(0);
+
+        T result=creator.createFromParcel(parcel);
+
+        parcel.recycle();
+
+        return(result);
     }
 }

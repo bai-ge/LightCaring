@@ -10,6 +10,8 @@ public class DrugAlarmConstant {
      */
     public static final String ALARM_CLOCK = "alarm_clock";
 
+
+    public static final String ALARM_ID = "alarm_id";
     /**
      * 小睡已执行次数
      */

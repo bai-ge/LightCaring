@@ -22,6 +22,8 @@
 
     <color name="colorPrimary">#009688</color>
     <color name="colorPrimaryDark">#00897b</color>
+    <!--<color name="colorPrimary">#12d5bf</color>-->
+    <!--<color name="colorPrimaryDark">#009d8b</color>-->
     <color name="colorAccent">#ffb74d</color>
     <color name="primary_text">#212121</color>
     <color name="home_back">#f7d280</color>

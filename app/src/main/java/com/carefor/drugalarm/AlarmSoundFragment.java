@@ -21,6 +21,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,6 +35,7 @@ import com.carefor.data.entity.DrugAlarmConstant;
 import com.carefor.data.entity.DrugAlarmStatus;
 import com.carefor.mainui.R;
 import com.carefor.util.AudioPlayer;
+import com.carefor.util.Tools;
 import com.carefor.view.MySlidingView;
 
 import java.lang.ref.WeakReference;
@@ -44,6 +46,7 @@ import java.util.Locale;
 
 public class AlarmSoundFragment extends Fragment implements OnClickListener {
 
+    private static final String TAG = AlarmSoundFragment.class.getCanonicalName();
     /**
      * 当前时间
      */
@@ -148,6 +151,7 @@ public class AlarmSoundFragment extends Fragment implements OnClickListener {
 
         mAlarmClock = getActivity().getIntent()
                 .getParcelableExtra(DrugAlarmConstant.ALARM_CLOCK);
+        Log.d(TAG, "界面收到"+mAlarmClock);
         if (mAlarmClock != null) {
             // 取得休息间隔
             mNapInterval = mAlarmClock.getNapInterval();
@@ -352,7 +356,7 @@ public class AlarmSoundFragment extends Fragment implements OnClickListener {
 
         // 设置休息相关信息
         Intent intent = new Intent(getActivity(), AlarmClockBroadcast.class);
-        intent.putExtra(DrugAlarmConstant.ALARM_CLOCK, mAlarmClock);
+        intent.putExtra(DrugAlarmConstant.ALARM_CLOCK, Tools.toByteArray(mAlarmClock));
         intent.putExtra(DrugAlarmConstant.NAP_RAN_TIMES, mNapTimesRan);
         PendingIntent pi = PendingIntent.getBroadcast(getActivity(),
                 -mAlarmClock.getId(), intent,

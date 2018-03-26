@@ -129,6 +129,9 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
             }
         });
 
+        //TODO DEBUG
+        mEditLog.setVisibility(View.INVISIBLE);
+
 
     }
 

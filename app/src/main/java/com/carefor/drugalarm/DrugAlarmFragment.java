@@ -257,6 +257,8 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
 
     }
 
+
+    //闹钟编辑后返回结果
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

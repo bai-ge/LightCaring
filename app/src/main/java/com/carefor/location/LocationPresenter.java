@@ -129,6 +129,18 @@ public class LocationPresenter implements LocationContract.Presenter {
                 }
 
                 @Override
+                public void fail() {
+                    super.fail();
+                    askLocation();
+                }
+
+                @Override
+                public void notFind() {
+                    super.notFind();
+                    askLocation();
+                }
+
+                @Override
                 public void timeout() {
                     super.timeout();
                     mFragment.showTip("发送超时");

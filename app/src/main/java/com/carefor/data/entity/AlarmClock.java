@@ -334,4 +334,28 @@ public class AlarmClock implements Parcelable {
     public void setOnOff(int onOff) {
         this.onOff = onOff;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuffer = new StringBuilder();
+        stringBuffer.append("{");
+        stringBuffer.append("id="+id);
+        stringBuffer.append("hour="+hour);
+        stringBuffer.append(", minute="+minute);
+        stringBuffer.append(", repeat="+repeat);
+        stringBuffer.append(", weeks="+weeks);
+        stringBuffer.append(", tag="+tag);
+        stringBuffer.append(", ringName="+ringName);
+        stringBuffer.append(", ringUrl="+ringUrl);
+        stringBuffer.append(", ringPager="+ringPager);
+        stringBuffer.append(", volume="+volume);
+        stringBuffer.append(", vibrate="+vibrate);
+        stringBuffer.append(", nap="+nap);
+        stringBuffer.append(", napInterval="+napInterval);
+        stringBuffer.append(", napTimes="+napTimes);
+        stringBuffer.append(", weaPrompt="+weaPrompt);
+        stringBuffer.append(", onOff="+onOff);
+        stringBuffer.append("}");
+        return stringBuffer.toString();
+    }
 }

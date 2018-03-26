@@ -11,6 +11,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.util.Log;
 
 import com.carefor.broadcast.AlarmClockBroadcast;
 import com.carefor.data.entity.AlarmClock;
@@ -24,6 +25,7 @@ import java.util.Calendar;
 
 public class AlarmUtil {
 
+    private final static String TAG = AlarmUtil.class.getCanonicalName();
     /**
      * 取消闹钟
      *
@@ -49,7 +51,11 @@ public class AlarmUtil {
     public static void startAlarmClock(Context context, AlarmClock alarmClock) {
 
         Intent intent = new Intent(context, AlarmClockBroadcast.class);
-        intent.putExtra(DrugAlarmConstant.ALARM_CLOCK, alarmClock);
+
+        intent.putExtra(DrugAlarmConstant.ALARM_CLOCK, Tools.toByteArray(alarmClock));
+        intent.putExtra(Intent.EXTRA_ALARM_COUNT, 123);
+        Log.d(TAG, "startAlarmClock : "+alarmClock);
+        intent.putExtra(DrugAlarmConstant.ALARM_ID, 142);
         // FLAG_UPDATE_CURRENT：如果PendingIntent已经存在，保留它并且只替换它的extra数据。
         // FLAG_CANCEL_CURRENT：如果PendingIntent已经存在，那么当前的PendingIntent会取消掉，然后产生一个新的PendingIntent。
         PendingIntent pi = PendingIntent.getBroadcast(context,
@@ -57,18 +63,20 @@ public class AlarmUtil {
                 PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager alarmManager = (AlarmManager) context
                 .getSystemService(Context.ALARM_SERVICE);
-
         // 取得下次响铃时间
+
+        Log.d(TAG, "intent.hash()="+intent.hashCode()+", pi.hash()="+pi.hashCode());
+        Log.d(TAG, "intent ="+intent+", pi ="+pi);
         long nextTime = calculateNextTime(alarmClock.getHour(),
                 alarmClock.getMinute(), alarmClock.getWeeks());
         // 设置闹钟
         // 当前版本为19（4.4）或以上使用精准闹钟
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextTime, pi);
+            //alarmManager.set(AlarmManager.RTC_WAKEUP, nextTime, pi);
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, nextTime, pi);
         }
-
     }
 
 
