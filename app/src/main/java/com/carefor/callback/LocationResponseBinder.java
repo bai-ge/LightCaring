@@ -38,6 +38,7 @@ public class LocationResponseBinder extends AbstractResponseBinder  {
                         callBack.meaning(text);
                     }
                     if(codeNum == Parm.SUCCESS_CODE && jsonObject.has(Parm.DATA)){
+                        callBack.success();
                         JSONObject locJson;
                         try{
                             //判断是否是数组

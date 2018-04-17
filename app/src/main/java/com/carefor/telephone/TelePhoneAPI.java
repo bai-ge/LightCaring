@@ -6,11 +6,13 @@ package com.carefor.telephone;
  */
 
 public interface TelePhoneAPI {
-    interface BaseCallBack{
+    interface BaseCallBack {
         void isBusy();
+
         void isErrorStatus();
     }
-    class BaseCallBackFactory implements BaseCallBack{
+
+    class BaseCallBackFactory implements BaseCallBack {
 
         @Override
         public void isBusy() {
@@ -22,26 +24,40 @@ public interface TelePhoneAPI {
 
         }
     }
-    class BaseCallBackAdapter extends BaseCallBackFactory{
+
+    class BaseCallBackAdapter extends BaseCallBackFactory {
 
     }
 
+    //状态
+    boolean isLeisure();
+    boolean isCalling();
+    boolean beCalled();
+    boolean isBusy();
+
     //TCP发出呼叫命令
-    void afxCallTo(String deviceId, BaseCallBack callBack);
-    void callTo(String deviceId, BaseCallBack callBack);
+    void afxCallTo(String deviceId, String name,  BaseCallBack callBack);
 
-    void checkUdpSuccess();
+    void callTo(String deviceId, String name, BaseCallBack callBack);
 
-    void afxBeCall(String deviceId, BaseCallBack callBack);
-    void beCall(String deviceId, BaseCallBack callBack);
+    void afxBeCall(String deviceId, String name,  BaseCallBack callBack);
+
+    void beCall(String deviceId, String name, BaseCallBack callBack);
+
+    void connectSuccess();
+
+    void oppBusy();
 
     //包括TCP发送指令 （界面使用这里）
     void onHangUp(BaseCallBack callBack);
+
     void onPickUp(BaseCallBack callBack);
 
 
+    void onNetworkChange();
 
     //（消息接收器用这里）
     void canTalk();
+
     void stop();
 }

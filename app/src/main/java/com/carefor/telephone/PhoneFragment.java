@@ -1,5 +1,6 @@
 package com.carefor.telephone;
 
+import android.app.Activity;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -8,7 +9,6 @@ import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -21,9 +21,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.carefor.connect.Connector;
 import com.carefor.mainui.R;
 import com.carefor.view.CircleImageView;
+import com.carefor.view.ProgressBall;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -45,6 +45,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     private TextView mTextAddress;
     private TextView mTextStatus;
     private EditText mEditLog;
+    private ProgressBall mProgressBall;
     private Button mBtnHangUp;
     private Button mBtnPickUp;
 
@@ -58,6 +59,9 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     private SensorManager mSensorManager;
 
     private Sensor mSensor;
+
+    private long clickTime;
+    private int count;
 
 
 
@@ -101,6 +105,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
         mTextAddress = (TextView) root.findViewById(R.id.address);
         mTextStatus = (TextView) root.findViewById(R.id.status);
         mEditLog = (EditText) root.findViewById(R.id.log);
+        mProgressBall = (ProgressBall) root.findViewById(R.id.progress);
         mBtnHangUp = (Button) root.findViewById(R.id.btn_hang_up);
         mBtnPickUp = (Button) root.findViewById(R.id.btn_pick_up);
 
@@ -129,10 +134,36 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
             }
         });
 
-        //TODO DEBUG
-        mEditLog.setVisibility(View.INVISIBLE);
-
-
+        //连击5次显示或隐藏日志窗口
+        mImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(System.currentTimeMillis() - clickTime <= 500){
+                    count ++;
+                    if(count >= 5){
+                        if(mEditLog != null && mTextDelayTime != null){
+                            if(mEditLog.getVisibility() == View.VISIBLE){
+                                mEditLog.setVisibility(View.INVISIBLE);
+                                mTextDelayTime.setVisibility(View.INVISIBLE);
+                                mTextAddress.setVisibility(View.INVISIBLE);
+                            }else{
+                                mEditLog.setVisibility(View.VISIBLE);
+                                mTextDelayTime.setVisibility(View.VISIBLE);
+                                mTextAddress.setVisibility(View.VISIBLE);
+                            }
+                        }
+                        count = 0;
+                    }
+                }else{
+                    count = 0;
+                }
+                clickTime = System.currentTimeMillis();
+            }
+        });
+        //TODO 调试时默认显示
+//        mEditLog.setVisibility(View.INVISIBLE);
+//        mTextDelayTime.setVisibility(View.INVISIBLE);
+//        mTextAddress.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -179,7 +210,27 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
         if (mode != AudioManager.MODE_NORMAL && mode != AudioManager.MODE_IN_COMMUNICATION) {
             return;
         }
+        if(ctx == null){
+            return;
+        }
         AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+        if (mode == AudioManager.MODE_NORMAL) {
+            audioManager.setSpeakerphoneOn(true);//打开扬声器
+        } else if (mode == AudioManager.MODE_IN_COMMUNICATION) {
+            audioManager.setSpeakerphoneOn(false);//关闭扬声器
+        }
+        audioManager.setMode(mode);
+    }
+    /**
+     * 设置语音播放的模式
+     *
+     * @param mode
+     */
+    public void setAudioMode(int mode) {
+        if (mode != AudioManager.MODE_NORMAL && mode != AudioManager.MODE_IN_COMMUNICATION) {
+            return;
+        }
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         if (mode == AudioManager.MODE_NORMAL) {
             audioManager.setSpeakerphoneOn(true);//打开扬声器
         } else if (mode == AudioManager.MODE_IN_COMMUNICATION) {
@@ -253,6 +304,16 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     }
 
     @Override
+    public void showLog(final TelePhone.LogBean logBean) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mEditLog.append(mSimpleDateFormat.format(new Date(logBean.getTime())) + " " + logBean.getLog() + "\n");
+            }
+        });
+    }
+
+    @Override
     public void showDelayTime(final long delay) {
         mHandler.post(new Runnable() {
             @Override
@@ -283,16 +344,35 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     }
 
     @Override
+    public void showProgress(final boolean isShow) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(isShow){
+                    mProgressBall.setVisibility(View.VISIBLE);
+                }else{
+                    mProgressBall.setVisibility(View.INVISIBLE);
+                }
+
+            }
+        });
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
         mSensorManager.unregisterListener(this);
 
     }
 
+
+
     @Override
     public void close() {
         setAudioMode(getContext(), AudioManager.MODE_NORMAL);
-        Connector.getInstance().unRegistConnectorListener("presenter");
-        getActivity().finish();
+        Activity activity = getActivity();
+        if(activity != null){
+            activity.finish();
+        }
     }
 }

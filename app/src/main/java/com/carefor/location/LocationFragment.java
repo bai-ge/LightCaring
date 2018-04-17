@@ -1,5 +1,6 @@
 package com.carefor.location;
 
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -7,7 +8,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -15,7 +15,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,7 +27,6 @@ import com.baidu.location.Poi;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.InfoWindow;
-import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -36,8 +37,10 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
+import com.baidu.mapapi.map.UiSettings;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.utils.DistanceUtil;
+
 import com.carefor.data.entity.Location;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.mainui.R;
@@ -45,6 +48,7 @@ import com.carefor.util.Tools;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static android.content.Context.SENSOR_SERVICE;
@@ -67,38 +71,94 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     private MapView mMapView;
 
+
+    //界面组件
     private TextView mTxtLatLng;
-    private TextView mTxtLocation;
-    private LinearLayout mLinearLayout;
+
+    private TextView mTxtAccuracy; //精度
+
+    private TextView mTxtArea; //地区
+
+    private TextView mTxtLocation; //详细地址描述
+
+    private LinearLayout mInformLayout;//通知栏
+    private TextView mTxtInform;
+
+    private RelativeLayout mLocationLayout; //位置窗口
+
+    private LinearLayout mLayout; //第一行字体
+
+    private ImageView mImgLocationType; //定位图标
+
+    private Button mBtnLocModel; //模式切换按钮
+
+    private Button mBtnAskLocation; //即时定位按钮
+
+    private Button mBtnAskHelp; //一键呼救按钮
+
+    private Button mBtnDestination; //目标定位按钮
+
+    private Button mBtnTrack; //是否显示路线按钮
+
+    private InfoWindow mInfoWindow; //目标显示对话框
+
+    private View mDialog;//对话框视图
+
+    private View mScaleView; //标尺定位视图
+
+    private View mCompassView;//指南针定位视图
+
+    //对话框组件
+    private TextView mTxtName; //目标名字
+
+    private TextView mTxtBatteryPercent;//电池电量
+
+    private ImageView mImgAccuracy;//信号精度，用四张图片表示 浅颜色(qfz, qft, qfx, qfv) 深颜色(qga, qfu, qfy, qfw)
+
+    private TextView mTxtBArea;
+
+    private TextView mTxtBLocation;
+
+    private TextView mTxtTime;
+
+    private TextView mTxtDistance;
+
+    private UiSettings mUiSettings;
+
+    private boolean mDialogIsShowing;
+
+
+    //TODO 调试相关
+    private long mClickTime;
+    private int mClickCount;
+
 
     private Runnable mHintInformRunnable = new Runnable() {
         @Override
         public void run() {
-            if(mLinearLayout != null){
-                mLinearLayout.setVisibility(View.GONE);
+            if (mInformLayout != null) {
+                mInformLayout.setVisibility(View.GONE);
             }
         }
     };
     private Runnable mHintLocationDialogRunnable = new Runnable() {
         @Override
         public void run() {
-            if(mBaiduMap != null && mInfoWindow != null){
+            if (mBaiduMap != null && mInfoWindow != null) {
                 mBaiduMap.hideInfoWindow();
             }
         }
     };
-    private TextView mTxtInform;
-    private Button mBtnLocModel;
-
-    private Button mBtnAskLocation;
-    private Button mBtnDestination;
-    private Button mBtnTrack;
 
 
-    private InfoWindow mInfoWindow;
-    private TextView mDialogText;
 
-    private View mScaleView;
+
+
+
+
+
+
+
 
 
     private boolean isFirstLoc = true; // 是否首次定位
@@ -121,17 +181,13 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
 
     //标记
-    private BitmapDescriptor mTargetMarker = BitmapDescriptorFactory.fromResource(R.drawable.icon_gcoding);
+    private BitmapDescriptor mTargetMarker = BitmapDescriptorFactory.fromResource(R.drawable.icon_qis);
 
     private Marker mMarker;
 
     private Polyline mMyPolyline;
     private Polyline mSelDesPolyline;
     private BitmapDescriptor mRedTexture;
-
-
-
-
 
 
     @Override
@@ -149,8 +205,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);//获取传感器管理服务
         mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
 
-        mDialogText = new TextView(getContext());
-        mDialogText.setBackgroundResource(R.drawable.popup);
+
         Log.d(TAG, "onCreate()");
     }
 
@@ -175,7 +230,18 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
     }
 
-    private void initView(View root){
+    @Override
+    public void isGuardian(boolean is) {
+        if(is){
+            mBtnAskHelp.setVisibility(View.GONE);
+        }else{
+            mBtnAskLocation.setVisibility(View.GONE);
+            mBtnDestination.setVisibility(View.INVISIBLE);
+        }
+
+    }
+
+    private void initView(View root) {
 
 
         // 地图初始化
@@ -188,7 +254,9 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                 resetScaleControlPosition();
             }
         });
+
         mBaiduMap = mMapView.getMap();
+        mUiSettings = mBaiduMap.getUiSettings();
         mBaiduMap.setOnMapDoubleClickListener(new BaiduMap.OnMapDoubleClickListener() {
             /**
              * 双击地图
@@ -201,37 +269,81 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mBaiduMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                if(marker == mMarker){
-                    showLocationDialog(marker.getPosition());
+                if (marker == mMarker) {
+                    if(mDialogIsShowing){
+                        mDialogIsShowing = false;
+                        mBaiduMap.hideInfoWindow();
+                        mMapView.removeView(mDialog);
+                    }else{
+                        showLocationDialog(marker.getPosition());
+                    }
                 }
                 return true;
             }
         });
+
+
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
-        mBtnLocModel = (Button) root.findViewById(R.id.btn_model);
-        mBtnAskLocation = (Button) root.findViewById(R.id.btn_ask_location);
-        mBtnDestination = (Button) root.findViewById(R.id.btn_destination);
-        mBtnTrack = (Button) root.findViewById(R.id.btn_track);
+
+        mInformLayout = (LinearLayout) root.findViewById(R.id.inform_layout);
+        mLocationLayout = (RelativeLayout) root.findViewById(R.id.relative_layout);
+        mLayout = (LinearLayout) root.findViewById(R.id.layout_my_location);
+
+        mImgLocationType = (ImageView) root.findViewById(R.id.img_location_type);
+
+        mTxtInform = (TextView) root.findViewById(R.id.inform_text);
         mTxtLatLng = (TextView) root.findViewById(R.id.txt_latlng);
+        mTxtAccuracy = (TextView) root.findViewById(R.id.txt_accuracy);
+        mTxtArea = (TextView) root.findViewById(R.id.txt_area);
         mTxtLocation = (TextView) root.findViewById(R.id.txt_location);
 
-        mLinearLayout = (LinearLayout) root.findViewById(R.id.inform_layout);
-        mTxtInform = (TextView) root.findViewById(R.id.inform_text);
+        mBtnLocModel = (Button) root.findViewById(R.id.btn_model);
+        mBtnDestination = (Button) root.findViewById(R.id.btn_destination);
+        mBtnTrack = (Button) root.findViewById(R.id.btn_track);
+
+        mBtnAskLocation = (Button) root.findViewById(R.id.btn_ask_location);
+        mBtnAskHelp = (Button) root.findViewById(R.id.btn_ask_help);
+
         mScaleView = root.findViewById(R.id.scale_view);
+        mCompassView = root.findViewById(R.id.compass_view);
+
+        //加载对话框视图
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        mDialog = inflater.inflate(R.layout.dialog_map, null);
+        initDialogView(mDialog);
+        mDialog.setAlpha(0.2f);//设置透明度
+        mDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDialogIsShowing = false;
+                mBaiduMap.hideInfoWindow();
+                mMapView.removeView(mDialog);
+            }
+        });
 
         mRedTexture = BitmapDescriptorFactory.fromAsset("icon_road_red_arrow.png");
 
         mBtnTrack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mSelDesPolyline != null && mSelDesPolyline.isVisible()){
+                if ((mSelDesPolyline != null && mSelDesPolyline.isVisible())||
+                        ( mMyPolyline != null && mMyPolyline.isVisible())) {
                     mBtnTrack.setBackgroundResource(R.drawable.btn_hint_track);
-                    mSelDesPolyline.setVisible(false);
-                }else{
-                    mBtnTrack.setBackgroundResource(R.drawable.btn_show_track);
                     if(mSelDesPolyline != null){
+                        mSelDesPolyline.setVisible(false);
+                    }
+                    if(mMyPolyline != null){
+                        mMyPolyline.setVisible(false);
+                    }
+
+                } else {
+                    mBtnTrack.setBackgroundResource(R.drawable.btn_show_track);
+                    if (mSelDesPolyline != null) {
                         mSelDesPolyline.setVisible(true);
+                    }
+                    if(mMyPolyline != null){
+                        mMyPolyline.setVisible(true);
                     }
                 }
             }
@@ -245,7 +357,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mBtnDestination.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mBaiduMap != null && mMarker != null){
+                if (mBaiduMap != null && mMarker != null) {
                     LatLng position = mMarker.getPosition();
                     MapStatus.Builder builder = new MapStatus.Builder();
                     builder.target(position);
@@ -261,7 +373,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                     case NORMAL:
                     case COMPASS:
                         // mBtnLocModel.setText("跟随");
-                        mBtnLocModel.setBackgroundResource(R.drawable.btn_follow);
+                        mBtnLocModel.setBackgroundResource(R.drawable.btn_followx);
                         mCurrentMode = MyLocationConfiguration.LocationMode.FOLLOWING;
                         mBaiduMap.setMyLocationConfiguration(new MyLocationConfiguration(
                                 mCurrentMode, true, null));
@@ -270,7 +382,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                         mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                         break;
                     case FOLLOWING:
-                       // mBtnLocModel.setText("罗盘");
+                        // mBtnLocModel.setText("罗盘");
                         mBtnLocModel.setBackgroundResource(R.drawable.btn_navigation);
                         mCurrentMode = MyLocationConfiguration.LocationMode.COMPASS;
                         mBaiduMap.setMyLocationConfiguration(new MyLocationConfiguration(
@@ -281,11 +393,42 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                 }
                 int size = mCacheRepository.getMyPoints().size();
                 locationService.requestLocation();
-                if(size > 0){
+                if (size > 0) {
                     MapStatus.Builder builder = new MapStatus.Builder();
                     builder.target(mCacheRepository.getMyPoints().get(size - 1));
                     mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 }
+                mLocationLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+        //TODO 调试，连击超过5次更换状态
+        mLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(System.currentTimeMillis() - mClickTime < 500){
+                    mClickCount ++;
+                    if(mClickCount >= 5){
+                        if(mTxtLatLng.getVisibility() == View.VISIBLE){
+                            mTxtLatLng.setVisibility(View.INVISIBLE);
+                            mTxtAccuracy.setVisibility(View.INVISIBLE);
+                        }else{
+                            mTxtLatLng.setVisibility(View.VISIBLE);
+                            mTxtAccuracy.setVisibility(View.VISIBLE);
+                        }
+                        mClickCount = 0;
+                    }
+                }else{
+                    mClickCount = 0;
+                }
+                mClickTime = System.currentTimeMillis();
+            }
+        });
+
+        mLocationLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mLocationLayout.setVisibility(View.INVISIBLE);
             }
         });
         mBaiduMap.setOnMapStatusChangeListener(new BaiduMap.OnMapStatusChangeListener() {
@@ -306,7 +449,7 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             REASON_GESTURE
             用户手势触发导致的地图状态改变,比如双击、拖拽、滑动底图
             */
-                switch (reason){
+                switch (reason) {
                     case REASON_API_ANIMATION:
                         break;
                     case REASON_DEVELOPER_ANIMATION:
@@ -331,19 +474,24 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
 
             @Override
             public void onMapStatusChangeFinish(MapStatus mapStatus) {
-              resetScaleControlPosition();
+                resetScaleControlPosition();
             }
         });
-
-        //TODO DEBUG
-        mBtnAskLocation.setVisibility(View.GONE);
-        mTxtLatLng.setVisibility(View.GONE);
-
-
+    }
+    private void initDialogView(View root){
+        mTxtName = (TextView) root.findViewById(R.id.txt_name);
+        mTxtBatteryPercent = (TextView) root.findViewById(R.id.txt_battery);
+        mImgAccuracy = (ImageView) root.findViewById(R.id.img_signal);
+        mTxtBArea = (TextView) root.findViewById(R.id.txt_area);
+        mTxtBLocation = (TextView) root.findViewById(R.id.txt_location);
+        mTxtTime = (TextView) root.findViewById(R.id.txt_time);
+        mTxtDistance = (TextView) root.findViewById(R.id.txt_distance);
     }
 
 
-    /**陀螺仪方向改变
+    /**
+     * 陀螺仪方向改变
+     *
      * @param event
      */
     @Override
@@ -378,31 +526,31 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mPresenter.start();
     }
 
-    private void resetScaleControlPosition(){
+
+    private void resetScaleControlPosition() {
         Rect mapRect = new Rect();
         mMapView.getGlobalVisibleRect(mapRect);
-        Rect scaleRect = new Rect();
-        mScaleView.getGlobalVisibleRect(scaleRect);
-        mMapView.setScaleControlPosition(new android.graphics.Point(scaleRect.left - mapRect.left, scaleRect.top - mapRect.top));
+        Rect rect = new Rect();
+        mScaleView.getGlobalVisibleRect(rect);
+        mMapView.setScaleControlPosition(new android.graphics.Point(rect.left - mapRect.left, rect.top - mapRect.top));
+        mCompassView.getGlobalVisibleRect(rect);
+        mBaiduMap.setCompassPosition(new Point(rect.left - mapRect.left, rect.top - mapRect.top));
     }
 
-    private void marker(LatLng ll){
+    private void marker(LatLng ll) {
         Log.d(TAG, "标记");
-        if(ll == null){
+        if (ll == null) {
             return;
         }
-        if(mMarker == null){
-            MarkerOptions markerOptions = new MarkerOptions().position(ll).icon(mTargetMarker);
+        if (mMarker == null) {
+            MarkerOptions markerOptions = new MarkerOptions().position(ll).icon(mTargetMarker).anchor(0.5f, 1f).perspective(false).zIndex(7);
             mMarker = (Marker) mBaiduMap.addOverlay(markerOptions);
-        }else{
+        } else {
             mMarker.setPosition(ll);
         }
         MapStatus.Builder builder = new MapStatus.Builder();
         builder.target(ll);
         mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-        if(mInfoWindow != null){
-            mBaiduMap.hideInfoWindow();
-        }
         showLocationDialog(ll);
     }
 
@@ -452,9 +600,9 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             @Override
             public void run() {
                 mTxtInform.setText(text);
-                mLinearLayout.setVisibility(View.VISIBLE);
+                mInformLayout.setVisibility(View.VISIBLE);
                 mHandler.removeCallbacks(mHintInformRunnable);
-                mHandler.postDelayed(mHintInformRunnable, 1000*30);
+                mHandler.postDelayed(mHintInformRunnable, 1000 * 30);
             }
         });
     }
@@ -469,31 +617,36 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             if (location == null || mMapView == null) {
                 return;
             }
+            if(location.getLocType() == BDLocation.TypeGpsLocation){
+                mImgLocationType.setBackgroundResource(R.drawable.ic_loc_gps);
+            }else{
+                mImgLocationType.setBackgroundResource(R.drawable.ic_loc_net);
+            }
             //更新位置
             LatLng point = new LatLng(location.getLatitude(), location.getLongitude());
             int size = mCacheRepository.getMyPoints().size();
             double distance = 0;
 
-            if(size > 2){
-                LatLng lastPoint = mCacheRepository.getMyPoints().get(size - 1);
-                LatLng lessPoint = mCacheRepository.getMyPoints().get(size - 2);
-                distance = DistanceUtil.getDistance(lastPoint, lessPoint);
-                Log.d(TAG, "distance:"+distance +"accuracy: "+location.getRadius());
-                if(distance <= 5 && location.getRadius() <= 50){
-                    mCacheRepository.getMyPoints().remove(size - 1);
-                }
-            }
-            if(location.getRadius() <= 50){
+//            if (size > 2) {
+//                LatLng lastPoint = mCacheRepository.getMyPoints().get(size - 1);
+//                LatLng lessPoint = mCacheRepository.getMyPoints().get(size - 2);
+//                distance = DistanceUtil.getDistance(lastPoint, lessPoint);
+//                Log.d(TAG, "distance:" + distance + "accuracy: " + location.getRadius());
+//                if (distance <= 5 && location.getRadius() <= 50) {
+//                    mCacheRepository.getMyPoints().remove(size - 1);
+//                }
+//            }
+            if (location.getRadius() <= 10) {
                 mCacheRepository.getMyPoints().add(point);
             }
-            if(mCacheRepository.getMyPoints().size() >= 2){
+            if (mCacheRepository.getMyPoints().size() >= 2) {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if(mMyPolyline == null){
+                        if (mMyPolyline == null) {
                             PolylineOptions polylineOptions = new PolylineOptions().width(10).points(mCacheRepository.getMyPoints()).color(0xAA0000FF);
                             mMyPolyline = (Polyline) mBaiduMap.addOverlay(polylineOptions);
-                        }else{
+                        } else {
                             mMyPolyline.setPoints(mCacheRepository.getMyPoints());
                         }
                     }
@@ -519,12 +672,14 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
             }
 
             DecimalFormat df = new DecimalFormat("#.000");
-            mTxtLatLng.setText("经度："+ df.format(mCacheRepository.getCurrentLon()) + "    维度："+df.format(mCacheRepository.getCurrentLat()));
-            mTxtLatLng.append(" d: "+distance);
-            mTxtLatLng.append(" accuracy:"+location.getRadius());
+            mTxtLatLng.setText("(" + df.format(mCacheRepository.getCurrentLon()) + " ," + df.format(mCacheRepository.getCurrentLat()) +")");
+
+            df = new DecimalFormat("#.00");
+            mTxtAccuracy.setText(df.format(location.getRadius()));
+
+            mTxtArea.setText(location.getAddrStr());
 
             StringBuffer stringBuffer = new StringBuffer(256);
-            stringBuffer.append(location.getAddrStr());
             if (location.getPoiList() != null && !location.getPoiList().isEmpty()) {
                 stringBuffer.append("(");
                 for (int i = 0; i < location.getPoiList().size() && i < 2; i++) {
@@ -533,19 +688,80 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
                 }
                 stringBuffer.append(")");
             }
-            mTxtLocation.setText(stringBuffer);
+//            mTxtLocation.setText(stringBuffer);
+            mTxtLocation.setText(location.getLocationDescribe());
             Log.d(TAG, "onReceiveLocation()");
+
+            List<Location> plocList = mCacheRepository.getDesLocation();
+            if(plocList != null && plocList.size() > 0){
+                Location ploc = plocList.get(plocList.size() - 1);
+                distance = DistanceUtil.getDistance(point, ploc.getLatLng());
+                String distanceTxt = "";
+                if(distance < 1000){
+                    distanceTxt = "距离："+df.format(distance) + "m";
+                }else {
+                    distanceTxt =  "距离："+df.format((distance / 1000)) + "km";
+                }
+                mTxtDistance.setText(distanceTxt);
+            }
         }
+
     };
+
+
 
     @Override
     public void showPLocation(Location loc) {
-        if(loc != null && loc.getLatLng() != null){
-            if(loc.getDescription() != null){
-                mDialogText.setText(loc.getDescription() +"\n"+ Tools.formatTime(loc.getTime()));
+        if(loc != null  && loc.getLatLng() != null){
+            List<Location> locList = CacheRepository.getInstance().getDesLocation();
+                locList.add(loc);
+                if (locList.size() > 500) {
+                    locList.remove(0);
+                }
+            Collections.sort(locList);//根据时间排序
+            showLocationDialog(loc);
+        }
+    }
+
+    @Override
+    public void showLocationDialog(Location loc) {
+        if (loc != null && loc.getLatLng() != null) {
+            if (loc.getDescription() != null) {
+                if(!Tools.isEmpty(loc.getName())){
+                    mTxtName.setText(loc.getName());
+                }
+                if(loc.getBatteryPercent() != 0){
+                    DecimalFormat df = new DecimalFormat("0%");
+                    mTxtBatteryPercent.setText(df.format(loc.getBatteryPercent()));
+                }
+
+                if(loc.getAccuracy() != 0){
+                    showSignal(loc.getAccuracy());
+                }
+
+
+                if(!Tools.isEmpty(loc.getArea())){
+                    mTxtBArea.setText(loc.getArea());
+                }
+
+                mTxtBLocation.setText(loc.getDescription());
+                mTxtTime.setText(Tools.formatTime(loc.getTime()));
+
+                if(mLocData != null && loc.getLatLng() != null){
+                    LatLng lastLatLng = new LatLng(mLocData.latitude, mLocData.longitude);
+                    double distance = DistanceUtil.getDistance(loc.getLatLng(), lastLatLng);
+
+                    String distanceTxt = "";
+                    DecimalFormat df = new DecimalFormat("#.00");
+                    if(distance < 1000){
+                        distanceTxt = "距离："+df.format(distance) + "m";
+                    }else {
+                        distanceTxt =  "距离："+df.format((distance / 1000)) + "km";
+                    }
+                    mTxtDistance.setText(distanceTxt);
+                }
             }
             marker(loc.getLatLng());
-            showTip("显示位置："+loc.toString());
         }
     }
 
@@ -553,10 +769,10 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
     public void showPLocation(List<Location> locationList) {
         //TODO 展示路径
         final List<LatLng> points = new ArrayList<>();
-        for (int i = 0; i < locationList.size(); i ++){
+        for (int i = 0; i < locationList.size(); i++) {
             points.add(locationList.get(i).getLatLng());
         }
-        setTargetDialog(locationList.get(locationList.size()-1).getDescription());
+        showLocationDialog(locationList.get(locationList.size() - 1));
         showTargetTrack(points);
     }
 
@@ -565,9 +781,9 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if(mSelDesPolyline == null){
+                if (mSelDesPolyline == null) {
                     mSelDesPolyline = (Polyline) mBaiduMap.addOverlay(new PolylineOptions().width(10).points(loc).color(0xAAFF0000));
-                }else{
+                } else {
                     mSelDesPolyline.setPoints(loc);
                 }
             }
@@ -575,9 +791,30 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         marker(loc.get(loc.size() - 1));
     }
 
+
+
+    //信号精度，用四张图片表示 浅颜色(qfz, qft, qfx, qfv) 深颜色(qga, qfu, qfy, qfw) 由弱到强
     @Override
-    public void setTargetDialog(String text) {
-        mDialogText.setText(text);
+    public void showSignal(final float acc) { //数值越小，强度越大
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(acc < 20){
+                    mImgAccuracy.setBackgroundResource(R.drawable.qfv);
+                    Log.d(TAG, "showSignal()"+acc);
+                }else if(acc < 50){
+                    mImgAccuracy.setBackgroundResource(R.drawable.qfx);
+                    Log.d(TAG, "showSignal()"+acc);
+                }else if(acc < 100){
+                    mImgAccuracy.setBackgroundResource(R.drawable.qft);
+                    Log.d(TAG, "showSignal()"+acc);
+                }else{
+                    mImgAccuracy.setBackgroundResource(R.drawable.qfz);
+                    Log.d(TAG, "showSignal()"+acc);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -585,10 +822,15 @@ public class LocationFragment extends Fragment implements SensorEventListener, L
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mInfoWindow = new InfoWindow(mDialogText, ll, -160);
+                mBaiduMap.hideInfoWindow();
+                mMapView.removeView(mDialog);
+                int height =  mTargetMarker.getBitmap().getHeight();
+                Log.d(TAG, "height ="+height);
+                mInfoWindow = new InfoWindow(mDialog, ll, -height);
                 mBaiduMap.showInfoWindow(mInfoWindow);
-                mHandler.removeCallbacks(mHintLocationDialogRunnable);
-                mHandler.postDelayed(mHintLocationDialogRunnable, 8000);
+                mDialogIsShowing = true;
+                //mHandler.removeCallbacks(mHintLocationDialogRunnable);
+               // mHandler.postDelayed(mHintLocationDialogRunnable, 8000);
             }
         });
     }

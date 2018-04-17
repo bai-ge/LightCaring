@@ -1,146 +1,319 @@
 package com.carefor.connect;
 
-import android.util.Log;
 
+import com.carefor.util.Tools;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+/**
+ * Created by baige on 2018/3/21.
+ */
+
+public class ConnectedByUDP extends BaseConnector {
 
 
-public class ConnectedByUDP {
 
-    private final static String TAG = ConnectedByUDP.class.getCanonicalName();
+    private SocketClientAddress address;
 
-    public static int localPort;
+    private DatagramSocketServer runningSocket;
 
-    private final static int DATA_LEN = 1024;
+    /**
+     * 记录上次接收到消息的时间
+     */
+    private long lastReceiveMessageTime;
 
-    private DatagramSocket mSocket;
+    /**
+     * 记录上次发送心跳包的时间
+     */
+    private long lastSendHeartBeatMessageTime;
 
-    private boolean mIsWork = false;
+    /**
+     * 记录上次发送数据片段的时间
+     * 仅在每个发送包开始发送时计时，结束后重置计时
+     * NoSendingTime 表示当前没有在发送数据
+     */
+    private final static long NoSendingTime = -1;
+    private long lastSendMessageTime = NoSendingTime;
 
-    private boolean mIsRuning;
 
-    private Thread mReceiveThread = null;
 
-    private OnUDPConnectListener mListener = null;
-
-    private static ExecutorService fixedThreadPool = null;
+    //当进入正在断开连接时，再收到对方的数据包时不再进入连接状态
+    private boolean disconnecting;
 
     public ConnectedByUDP() {
-        try {
-            mSocket = new DatagramSocket();
-            localPort = mSocket.getLocalPort();
-            Log.d(TAG, "UDP监听端口:" + localPort + "成功");
-            mIsWork = true;
-            mIsRuning = false;
-            fixedThreadPool = Executors.newFixedThreadPool(8);//创建最多能并发运行5个线程的线程池
-        } catch (SocketException e) {
-            Log.d(TAG, "UDP监听端口:" + localPort + "失败");
-            mIsWork = false;
-            e.printStackTrace();
+        this(new SocketClientAddress());
+    }
+
+
+
+    /**
+     * 当前连接状态
+     * 当设置状态为{@link ConnectedByUDP.State#Connected}
+     * 此状态仅为一个标识
+     */
+    private ConnectedByUDP.State state;
+
+    public enum State {
+        Disconnected, Connecting, Connected
+    }
+
+    protected ConnectedByUDP setState(ConnectedByUDP.State state) {
+        this.state = state;
+        return this;
+    }
+
+    public ConnectedByUDP.State getState() {
+        if (this.state == null) {
+            return ConnectedByUDP.State.Disconnected;
+        }
+        return this.state;
+    }
+    public boolean isConnected() {
+        return getState() == ConnectedByUDP.State.Connected;
+    }
+
+    @Override
+    public boolean isConnected(int lastReceiveTime) {
+        if(System.currentTimeMillis() - getLastReceiveMessageTime() > lastReceiveTime){
+            return false;
+        }
+        return isDisconnected();
+    }
+    public boolean isConnecting() {
+        return getState() == ConnectedByUDP.State.Connecting;
+    }
+    public boolean isDisconnected() {
+        return getState() == ConnectedByUDP.State.Disconnected;
+    }
+
+    protected ConnectedByUDP setDisconnecting(boolean disconnecting) {
+        this.disconnecting = disconnecting;
+        return this;
+    }
+    public boolean isDisconnecting() {
+        return this.disconnecting;
+    }
+
+    public ConnectedByUDP(SocketClientAddress address) {
+        this.address = address;
+    }
+
+    public SocketClientAddress getAddress() {
+        return address;
+    }
+
+    public void setAddress(SocketClientAddress address) {
+        this.address = address;
+    }
+
+    public DatagramSocketServer getRunningSocket() {
+        return runningSocket;
+    }
+
+    public ConnectedByUDP setRunningSocket(DatagramSocketServer runningSocket) {
+        this.runningSocket = runningSocket;
+        return this;
+    }
+
+    @Override
+    public void connect() {
+        if(isConnected()){
+            return;
+        }
+        if (getAddress() == null) {
+            throw new IllegalArgumentException("we need a SocketClientAddress to connect");
+        }
+
+        if(getRunningSocket() == null){
+            throw new IllegalArgumentException("we need a DatagramSocketServer to connect");
+        }
+        getAddress().checkValidation();
+        setState(State.Connecting);
+        setDisconnecting(false);
+        //TODO 向远程发送连接请求，暂时使用心跳包代替
+        sendConnectedPacket();
+    }
+
+    @Override
+    public void disconnect() {
+        //TODO 向远程发送断开请求
+//        if(getRunningSocket() != null){
+//            getRunningSocket().remove(this);
+//        }
+        if(getRunningSocket() == null){
+            return;
+        }
+        setDisconnecting(true);
+        sendDisconnectedPacket();
+        //不再发送信息
+        setRunningSocket(null);
+        //TODO 清除更多的数据
+    }
+
+    @Override
+    protected void sendHeartBeat() {
+        if(isDisconnecting()){
+            return;
+        }
+        if (getAddress() == null) {
+            throw new IllegalArgumentException("we need a SocketClientAddress to connect");
+        }
+
+        if(getRunningSocket() == null){
+            throw new IllegalArgumentException("we need a DatagramSocketServer to connect");
+        }
+        getAddress().checkValidation();
+        SocketPacket packet = new SocketPacket();
+       if(sendPacket(packet) != null){
+            setLastSendHeartBeatMessageTime(System.currentTimeMillis());
+       }
+    }
+
+    protected void sendConnectedPacket(){
+        //TODO 暂时使用心跳包代替
+        if (getAddress() == null) {
+            throw new IllegalArgumentException("we need a SocketClientAddress to connect");
+        }
+
+        if(getRunningSocket() == null){
+            throw new IllegalArgumentException("we need a DatagramSocketServer to connect");
+        }
+        getAddress().checkValidation();
+        SocketPacket packet = new SocketPacket();
+        packet.setHeartBeat(true);
+        if(sendPacket(packet) != null){
+            setLastSendMessageTime(System.currentTimeMillis());
         }
     }
 
-    public ConnectedByUDP(int localPort) {
-        try {
-            this.localPort = localPort;
-            mSocket = new DatagramSocket(localPort);
-            Log.d(TAG, "UDP监听端口:" + localPort + "成功");
-            mIsWork = true;
-            mIsRuning = false;
-        } catch (SocketException e) {
-            Log.d(TAG, "UDP监听端口:" + localPort + "失败");
-            mIsWork = false;
-            e.printStackTrace();
+    protected void sendDisconnectedPacket(){
+        //TODO 暂时使用心跳包代替
+        if (getAddress() == null) {
+            throw new IllegalArgumentException("we need a SocketClientAddress to connect");
+        }
+
+        if(getRunningSocket() == null){
+            throw new IllegalArgumentException("we need a DatagramSocketServer to connect");
+        }
+        getAddress().checkValidation();
+        SocketPacket packet = new SocketPacket();
+        packet.setDisconnected(true);
+        if(sendPacket(packet) != null){
+            setLastSendMessageTime(System.currentTimeMillis());
         }
     }
 
-    public void setOnUDPConnectListener(OnUDPConnectListener listener) {
-        this.mListener = listener;
+    @Override
+    public BaseConnector registerConnectedListener(OnConnectedListener listener) {
+        return null;
     }
 
-    public void start() {
-        if (mIsWork && !mIsRuning) {
-            mIsRuning = true;
-            receive();
+    @Override
+    public BaseConnector unRegisterConnectedListener(OnConnectedListener listener) {
+        return null;
+    }
+
+    @Override
+    public BaseConnector registerSendingListener(OnSocketSendingListener listener) {
+        return null;
+    }
+
+    @Override
+    public BaseConnector unRegiserSendingListener(OnSocketSendingListener listener) {
+        return null;
+    }
+
+    @Override
+    public BaseConnector registerReceivingListener(OnSocketReceivingListener listener) {
+        return null;
+    }
+
+    @Override
+    public BaseConnector unRegiserReceivingListener(OnSocketReceivingListener listener) {
+        return null;
+    }
+
+    public long getLastReceiveMessageTime() {
+        return lastReceiveMessageTime;
+    }
+
+    protected ConnectedByUDP setLastReceiveMessageTime(long lastReceiveMessageTime) {
+        this.lastReceiveMessageTime = lastReceiveMessageTime;
+        return this;
+    }
+
+    public long getLastSendHeartBeatMessageTime() {
+        return lastSendHeartBeatMessageTime;
+    }
+
+    protected ConnectedByUDP setLastSendMessageTime(long lastSendMessageTime) {
+        this.lastSendMessageTime = lastSendMessageTime;
+        return this;
+    }
+
+    public long getLastSendMessageTime() {
+        return this.lastSendMessageTime;
+    }
+
+    protected ConnectedByUDP setLastSendHeartBeatMessageTime(long lastSendHeartBeatMessageTime) {
+        this.lastSendHeartBeatMessageTime = lastSendHeartBeatMessageTime;
+        return this;
+    }
+    @Override
+    public SocketPacket sendPacket(SocketPacket packet) {
+        if(packet == null){
+            return null;
         }
-    }
-    public boolean isWork(){
-        return mIsWork;
-    }
-
-    private void receive() {
-        mReceiveThread = new Thread() {
-            @Override
-            public void run() {
-                while (mIsWork && mSocket != null) {
-                    DatagramPacket packet = new DatagramPacket(new byte[DATA_LEN], DATA_LEN);
-                    try {
-                        mSocket.receive(packet);
-                        if (packet.getLength() >= 4) {
-                           if(mListener != null){
-                               mListener.receiveMessage(packet);
-                           }
-                        }
-                        packet = null;
-                    } catch (IOException e) {
-                        mIsWork = false;
-                        e.printStackTrace();
-                    }
-
-                }
-                mIsRuning = false;
-                mIsWork = false;
-                if (mListener != null) {
-                    mListener.doNotWork();
-                }
+        if(getAddress() == null){
+            return null;
+        }
+        if(getRunningSocket() == null){
+            return null;
+        }
+        if(getAddress().isValid()){
+            if(!packet.isPacket()){
+                packet.packet();
             }
-        };
-        mReceiveThread.start();
+            DatagramPacket datagramPacket = null;
+            try {
+                datagramPacket = new DatagramPacket(packet.getAllBuf(), packet.getAllBuf().length, getAddress().getInetSocketAddress());
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            if(getRunningSocket() != null && datagramPacket != null){
+                getRunningSocket().send(datagramPacket);
+                return packet;
+            }
+        }
+        return null;
     }
 
-
-    public synchronized boolean send(DatagramPacket packet) {
-        if (packet == null) {
-            return false;
+    @Override
+    public SocketPacket sendData(byte[] content) {
+        if(content == null || content.length == 0){
+            return null;
         }
-        if (mSocket == null || !mIsWork) {
-            return false;
-        }
-        try {
-            mSocket.send(packet);
-            return true;
-        } catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            Log.e(TAG, e.getMessage());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            Log.e(TAG, e.getMessage());
-        }
-        return false;
+        SocketPacket packet = new SocketPacket(content, false);
+        return sendPacket(packet);
     }
 
-    public void close() {
-        mIsWork = false;
-        if (mSocket != null && !mSocket.isClosed()) {
-            mSocket.close();
-            mSocket = null;
+    @Override
+    public SocketPacket sendData(byte[] heart, byte[] content) {
+        SocketPacket packet = null;
+        if(heart == null || heart.length == 0){
+            return sendData(content);
         }
+        if(content == null || content.length == 0){
+            packet = new SocketPacket(heart, true);
+            return sendPacket(packet);
+        }
+        packet = new SocketPacket(heart, content);
+        return sendPacket(packet);
     }
 
-    public interface OnUDPConnectListener {
-        void connectedSuccess(String userId, String ip, int port);
-
-        void receiveMessage(DatagramPacket packet);
-
-        void doNotWork();
+    @Override
+    public SocketPacket sendString(String message) {
+        return sendData(Tools.stringToData(message, Tools.DEFAULT_ENCODE));
     }
 }

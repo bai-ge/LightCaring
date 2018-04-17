@@ -95,12 +95,10 @@
         </activity>
 
         <activity android:name="com.carefor.membermanage.MemberManageActivity" />
-        <activity android:name="com.carefor.membermanage.AddMemberActivity" />
         <activity android:name="com.carefor.about.AboutActivity" />
         <activity android:name="com.carefor.search.SearchActivity"/>
         <activity android:name="com.carefor.location.LocationActivity"/>
         <activity android:name="com.carefor.housekeeping.HousekeepingActivity"/>
-        <service android:name=".DaemonService"/>
         <receiver
             android:name="com.carefor.jpush.JPushReceiver"
             android:enabled="true"
@@ -113,6 +111,18 @@
                 <action android:name="cn.jpush.android.intent.ACTION_RICHPUSH_CALLBACK" /> <!--Optional 用户接受Rich Push Javascript 回调函数的intent-->
                 <action android:name="cn.jpush.android.intent.CONNECTION" /><!-- 接收网络变化 连接/断开 since 1.6.3 -->
                 <category android:name="com.carefor.mainui" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.carefor.broadcast.BatteryReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BATTERY_CHANGED"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.carefor.jpush.IPushReceiver">
+            <intent-filter>
+                <action android:name="com.carefor.mainui.RECEIVE_MSG"/>
+                <action android:name="com.carefor.mainui.SEND_MSG_FIAL"/>
             </intent-filter>
         </receiver>
 
@@ -187,6 +197,9 @@
             android:name="com.carefor.drugalarm.AlarmSoundActivity"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Wallpaper.NoTitleBar"/>
+
+        <activity android:name="com.carefor.more.MoreActivity" />
+        <activity android:name="com.carefor.personal.PersonalActivity"/>
 
     </application>
 

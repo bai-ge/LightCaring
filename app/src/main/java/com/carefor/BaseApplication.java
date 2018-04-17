@@ -1,22 +1,28 @@
 package com.carefor;
 
 
-import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Application;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
 
 import com.baidu.mapapi.CoordType;
 import com.baidu.mapapi.SDKInitializer;
+import com.carefor.broadcast.SendMessageBroadcast;
+import com.carefor.data.source.cache.CacheRepository;
+import com.carefor.data.source.remote.Parm;
 import com.carefor.location.LocationService;
-import com.carefor.mainui.DaemonService;
+import com.carefor.service.DaemonService;
 import com.carefor.telephone.TelePhone;
 import com.carefor.util.Loggerx;
 import com.carefor.util.Tools;
+import com.coolerfall.daemon.Daemon;
 
 import cn.jpush.android.api.JPushInterface;
 
@@ -36,9 +42,12 @@ public class BaseApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        if(checkCallingPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+        if(Tools.checkPermissionWriteExternalStorage(getApplicationContext())){
             Loggerx.bWriteToFile = true;
         }
+       if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1){
+           Loggerx.bWriteToFile = false;
+       }
         //日志管理
         Loggerx.d(TAG, "打开应用");
         LocationService locationService = LocationService.getInstance(getApplicationContext());
@@ -51,6 +60,9 @@ public class BaseApplication extends Application {
         String text = JPushInterface.getRegistrationID(this);
         Log.d("JPush", "JPush ID:"+text);
 
+        //初始化本地发送广播
+        SendMessageBroadcast.getInstance().init(getApplicationContext());
+
         //初始化电话
         TelePhone.getInstance().init(getApplicationContext());
 
@@ -62,11 +74,53 @@ public class BaseApplication extends Application {
 
 
         //守护服务
-        Intent intent = new Intent(this, DaemonService.class);
-        intent.putExtra(DaemonService.ALARM_START, true);
-        startService(intent);
+//        Intent intent = new Intent(this, DaemonService.class);
+//        intent.putExtra(DaemonService.ALARM_START, true);
+//        startService(intent);
+        //守护服务
 
-        //网络监测
-        Tools.checkNetwork(getApplicationContext());
+        Intent intent = new Intent(this, DaemonService.class);
+        if(!Tools.isEmpty(text)){
+            intent.putExtra(Parm.DEVICE_ID, text);
+        }
+        startService(new Intent(this, DaemonService.class));
+        registerReceiver();
+    }
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Bundle bundle = intent.getExtras();
+            Log.d(TAG, "action ="+action);
+            Log.d(TAG, Tools.printBundle(bundle));
+            if(action.equals(Intent.ACTION_BATTERY_CHANGED)){
+                int level = intent.getIntExtra( "level" , 0 );//电量（0-100）
+                int status = intent.getIntExtra( "status" , 0 );
+                int health = intent.getIntExtra( "health" , 1 );
+                boolean present = intent.getBooleanExtra( "present" , false );
+                int scale = intent.getIntExtra( "scale" , 0 );
+                int plugged = intent.getIntExtra( "plugged" , 0 );//
+                int voltage = intent.getIntExtra( "voltage" , 0 );//电压
+                int temperature = intent.getIntExtra( "temperature" , 0 ); // 温度的单位是10℃
+                String technology = intent.getStringExtra( "technology" );
+                if(scale != 0){
+                   CacheRepository.getInstance().setBatteryPercent((float) (level * 1.0 / scale));
+                    Log.d(TAG, ""+CacheRepository.getInstance().getBatteryPercent());
+                    Log.d(TAG, "batteryPercent = "+(level * 1.0 / scale));
+                }else{
+                    CacheRepository.getInstance().setBatteryPercent(0);
+                }
+            }
+        }
+    };
+
+    private void registerReceiver(){
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(mReceiver, filter);
+    }
+    private void unRegisterReceiver(){
+        unregisterReceiver(mReceiver);
     }
 }

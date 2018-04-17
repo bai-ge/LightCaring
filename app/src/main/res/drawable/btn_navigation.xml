@@ -34,5 +34,5 @@
         android:right="5dp"
         android:bottom="5dp"
         android:top="5dp"
-        android:drawable="@drawable/arrow"/>
+        android:drawable="@drawable/nsdk_common_ic_locate_car"/>
 </layer-list>

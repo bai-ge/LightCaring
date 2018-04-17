@@ -14,12 +14,15 @@ public interface MainContract {
         void showDrawer();
         void callTo();
         void stop();
-
+        void preUser();
+        void nextUser();
     }
+
     interface View extends BaseView<Presenter>{
         void showEmUser(User user);
         void showInform(String text);
         void showInform(String text, long time);
         void hideInform();
+        void setEnableArrow(boolean isEnable);
     }
 }

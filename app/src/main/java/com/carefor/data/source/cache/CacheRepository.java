@@ -6,12 +6,14 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.baidu.mapapi.model.LatLng;
-import com.carefor.connect.Connector;
+import com.carefor.broadcast.SendMessageBroadcast;
+import com.carefor.data.entity.Candidate;
 import com.carefor.data.entity.DeviceModel;
 import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
-import com.carefor.membermanage.MemberInfo;
+import com.carefor.data.source.Repository;
 import com.carefor.setting.SettingActivity;
+import com.carefor.telephone.TelePhone;
 import com.carefor.util.JPushTools;
 
 import java.util.ArrayList;
@@ -42,11 +44,11 @@ public class CacheRepository {
 
     private int mServerUdpPort = 12059;
 
-    private String mTalkWith = ""; //测试要打给谁
-    private DeviceModel mTalkWithDevice = null;
-
-    //紧急联系人 TODO 取消上面的mTalkWith
+    //紧急联系人
     private User mSelectUser = null; //应至少保证id、name、tel 、device_id准确
+    private int selectIndex;
+    private List<User> relatedUsers; //监护人或被监护人列表
+
 
     private boolean mP2PConnectSuccess = false;
     private String mP2PIp = "";
@@ -75,8 +77,9 @@ public class CacheRepository {
 
     private Map<String, DeviceModel> mCacheddevices;
 
-    //监护人或被监护人列表
-    private List<MemberInfo> mMemberInfoList;
+    private Map<String, Candidate> candidateMap;
+
+
 
 
 
@@ -85,15 +88,26 @@ public class CacheRepository {
     private double mCurrentLat = 0.0;//维度
     private double mCurrentLon = 0.0; //经度
 
+    private List<Location> mMyLocation = new ArrayList<>();
     private List<Location> mDesLocation = new ArrayList<>(); //服务器返回的位置信息，最多保存500个
     private List<LatLng> mSelPoints = new ArrayList<>(); //目标轨迹
     private List<LatLng> mMyPoints = new ArrayList<>();//自己的轨迹
 
+    private boolean bShowNotification; //是否已经显示通知栏过，如果已经显示，后面都不需要显示通知栏
 
+    private float batteryPercent;
 
+    public float getBatteryPercent() {
+        return batteryPercent;
+    }
+
+    public void setBatteryPercent(float batteryPercent) {
+        this.batteryPercent = batteryPercent;
+    }
 
     private CacheRepository() {
         mCacheddevices = Collections.synchronizedMap(new LinkedHashMap<String, DeviceModel>());
+        candidateMap = Collections.synchronizedMap(new LinkedHashMap<String, Candidate>());
     }
 
     public static CacheRepository getInstance() {
@@ -125,14 +139,16 @@ public class CacheRepository {
         mServerUdpPort = Integer.valueOf(preferences.getString(SettingActivity.KEY_UDP_PORT, SettingActivity.DEFAULT_UDP_PORT));
         if(!JPushTools.isEmpty(ip) && !ip.equals(mServerIp)){
             mServerIp = ip;
-            Connector.getInstance().afxConnectServer();
+//            Connector.getInstance().afxConnectServer();
+            //发送广播，连接服务器
+            SendMessageBroadcast.getInstance().connectServer(ip, ""+mServerPort);
         }
         if (mSelectUser == null) {
             String tel = preferences.getString(SettingActivity.KEY_PHONE, "");
             String em_name = preferences.getString("emergency_name", "");
-            mTalkWith = preferences.getString("emergency_device_id", "");
+            String talkWith = preferences.getString("emergency_device_id", "");
             mSelectUser = new User();
-            mSelectUser.setDeviceId(mTalkWith);
+            mSelectUser.setDeviceId(talkWith);
             mSelectUser.setName(em_name);
             mSelectUser.setTel(tel);
             if(preferences.contains("select_id")){
@@ -173,9 +189,11 @@ public class CacheRepository {
         // editor.putString(SettingActivity.KEY_PHONE_SERVER_IP, mServerIp);
         // editor.putString(SettingActivity.KEY_TCP_PORT, ""+mServerPort);
         // editor.putString(SettingActivity.KEY_UDP_PORT, ""+mServerUdpPort);
-        //后面换成紧急联系人
-        editor.putString(SettingActivity.KEY_PHONE, mTalkWith);
+
         if (mSelectUser != null) {
+            //后面换成紧急联系人 TODO 删除
+            editor.putString(SettingActivity.KEY_PHONE, mSelectUser.getDeviceId());
+
             editor.putInt("select_id", mSelectUser.getUid());
             editor.putString(SettingActivity.KEY_PHONE, mSelectUser.getTel());
             editor.putString("emergency_name", mSelectUser.getName());
@@ -275,20 +293,13 @@ public class CacheRepository {
         return mDeviceId;
     }
 
-    public String getTalkWith() {
-        return mTalkWith;
-    }
-
-    public void setTalkWith(String mTalkWith) {
-        this.mTalkWith = mTalkWith;
-    }
-
     public boolean isP2PConnectSuccess() {
         return mP2PConnectSuccess;
     }
 
     public void setP2PConnectSuccess(boolean mP2PConnectSuccess) {
         this.mP2PConnectSuccess = mP2PConnectSuccess;
+        TelePhone.getInstance().onNetworkChange();
     }
 
     public String getP2PIp() {
@@ -307,26 +318,27 @@ public class CacheRepository {
         this.mP2PPort = mP2PPort;
     }
 
-    public DeviceModel getTalkWithDevice() {
-        return mTalkWithDevice;
-    }
+
 
     public String getRingUri() {
         return mRingUri;
     }
 
-    public void setTalkWithDevice(DeviceModel mTalkWithDevice) {
-        this.mTalkWithDevice = mTalkWithDevice;
+
+
+    public Candidate add(Candidate candidate){
+        if(candidate != null){
+            candidateMap.put(candidate.getFrom(), candidate);
+        }
+        return candidate;
+    }
+    public ArrayList<Candidate> getCandidates(){
+        if(candidateMap != null &&candidateMap.size() > 0){
+            return new ArrayList<>(candidateMap.values());
+        }
+       return null;
     }
 
-    //监护人或被监护人列表 TODO 删除
-    public List<MemberInfo> getmMemberInfoList() {
-        return mMemberInfoList;
-    }
-
-    public void setmMemberInfoList(List<MemberInfo> mMemberInfoList) {
-        this.mMemberInfoList = mMemberInfoList;
-    }
 
     public User getSelectUser() {
         return mSelectUser;
@@ -337,9 +349,48 @@ public class CacheRepository {
     }
 
 
+    public int getSelectIndex() {
+        return selectIndex;
+    }
+
+    public void setSelectIndex(int selectIndex) {
+        this.selectIndex = selectIndex;
+    }
+
+    public List<User> getRelatedUsers() {
+        return relatedUsers;
+    }
+
+    public void setRelatedUsers(List<User> relatedUsers) {
+        this.relatedUsers = relatedUsers;
+    }
+
+    //TODO selectUser 信息可能不完整
+    public User preRelatedUser(){
+        if(getRelatedUsers() != null && getRelatedUsers().size() > 0){
+            setShowNotification(false);
+            int size  = getRelatedUsers().size();
+            selectIndex = (selectIndex  + size - 1) % size;
+            setSelectUser(getRelatedUsers().get(selectIndex));
+            return getSelectUser();
+        }
+        return null;
+    }
+
+    public User nextRelatedUser(){
+        if(getRelatedUsers() != null && getRelatedUsers().size() > 0){
+            setShowNotification(false);
+            int size  = getRelatedUsers().size();
+            selectIndex = (selectIndex  + 1) % size;
+            setSelectUser(getRelatedUsers().get(selectIndex));
+            return getSelectUser();
+        }
+        return null;
+    }
+
     /*
-    * ****************************** 定位相关
-    * */
+        * ****************************** 定位相关
+        * */
     public float getCurrentAccracy() {
         return mCurrentAccracy;
     }
@@ -388,6 +439,22 @@ public class CacheRepository {
         this.mMyPoints = mMyPoints;
     }
 
+    public boolean isShowNotification() {
+        return bShowNotification;
+    }
+
+    public void setShowNotification(boolean bShowNotification) {
+        this.bShowNotification = bShowNotification;
+    }
+
+    public List<Location> getMyLocation() {
+        return mMyLocation;
+    }
+
+    public void setMyLocation(List<Location> mMyLocation) {
+        this.mMyLocation = mMyLocation;
+    }
+
     public User who() {
         return mLoginUser;
     }
@@ -401,5 +468,17 @@ public class CacheRepository {
         this.mLoginUser = user;
     }
 
+    public void logout(){
+        //清除相关数据
+        setLogin(false);
+        setShowNotification(false);
+        setSelectUser(null);
+        setRelatedUsers(null);
+    }
+
+    public void login(User user, Repository repository){
+        this.setYouself(user);
+        //TODO 读取必要数据
+    }
 
 }

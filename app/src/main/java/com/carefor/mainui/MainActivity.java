@@ -4,13 +4,16 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -23,18 +26,26 @@ import android.widget.Toast;
 
 import com.carefor.BaseActivity;
 import com.carefor.about.AboutActivity;
+import com.carefor.broadcast.SendMessageBroadcast;
+import com.carefor.connect.msg.Parm;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.LocalRepository;
+import com.carefor.jpush.JPushMessageProcess;
 import com.carefor.login.LoginActivity;
 import com.carefor.membermanage.MemberManageActivity;
+import com.carefor.personal.PersonalActivity;
+import com.carefor.service.DaemonService;
+import com.carefor.service.IPush;
 import com.carefor.setting.SettingActivity;
 import com.carefor.util.ActivityUtils;
+import com.carefor.util.IPUtil;
 import com.carefor.util.Loggerx;
 import com.carefor.util.Tools;
 
 import java.util.ArrayList;
 
+import cn.jpush.android.api.JPushInterface;
 
 
 public class MainActivity extends BaseActivity {
@@ -45,27 +56,95 @@ public class MainActivity extends BaseActivity {
 
     private NavigationView mNavigationView;
 
-    private Toast mToast;
+    private  MainFragment mainFragment;
+
+
+
 
 
     private final int SDK_PERMISSION_REQUEST = 127;
 
     private String permissionInfo = "";
 
+    //编译之后在app\build\generated\source\aidl\debug\com\carefor\service\IPush.java下
+    private IPush mIpush;
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            mIpush = IPush.Stub.asInterface(iBinder);
+            try {
+                mIpush.setDeviceId(JPushInterface.getRegistrationID(MainActivity.this));
+                int state = mIpush.getConnectState();
+                if(mainFragment == null){
+                    return;
+                }
+                switch (state){
+                    case Parm.CONNECTING:
+                        mainFragment.showInform("正在连接服务器……");
+                        break;
 
+                    case Parm.CONNECTED:
+                        mainFragment.showInform("正在登录……");
+                        break;
+                    case Parm.LOGIN:
+                        mainFragment.hideInform();
+                        break;
+                    case Parm.DISCONNECTED:
+                        mainFragment.showInform("已断开连接!");
+                        break;
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mIpush = null;
+        }
+    };
+
+    private BroadcastReceiver connectReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "动作："+action);
+            if(action.equals(SendMessageBroadcast.ACTION_CONNECT_STATE)){
+                Bundle bundle = intent.getExtras();
+                if(bundle.containsKey(SendMessageBroadcast.KEY_CONNECT_STATE)){
+                    int state = bundle.getInt(SendMessageBroadcast.KEY_CONNECT_STATE);
+                    if(mainFragment == null){
+                        return;
+                    }
+                    switch (state){
+                        case Parm.CONNECTING:
+                            mainFragment.showInform("正在连接服务器……");
+                            break;
+
+                        case Parm.CONNECTED:
+                            mainFragment.showInform("正在登录……");
+                            break;
+                        case Parm.LOGIN:
+                            mainFragment.showInform("登录成功!", 5000);
+                            break;
+                        case Parm.DISCONNECTED:
+                            mainFragment.showInform("已断开连接!");
+                            break;
+                    }
+                }
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_main);
 
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-
-        /*
-        Intent intent = new Intent(this, ConnectService.class);
+        Intent intent = new Intent(this, DaemonService.class);
         bindService(intent, mConnection, BIND_AUTO_CREATE);//绑定服务
-        */
+
 
 
 
@@ -82,7 +161,7 @@ public class MainActivity extends BaseActivity {
         cacheRepository.readConfig(this);
 
 
-        MainFragment mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
+        mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
         if (mainFragment == null) {
             // Create the fragment
             mainFragment = MainFragment.newInstance();
@@ -99,10 +178,18 @@ public class MainActivity extends BaseActivity {
 
         getPersimmions();
 
-        Intent intent1 = new Intent(this, DaemonService.class);
-        startService(intent1);
         Log.d("guide_page", "启动主页面");
+        registerReceiver();
     }
+
+
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(SendMessageBroadcast.ACTION_CONNECT_STATE);
+        registerReceiver(connectReceiver, intentFilter);
+    }
+
+
     @TargetApi(23)
     private void getPersimmions() {
 
@@ -252,6 +339,11 @@ public class MainActivity extends BaseActivity {
                             case R.id.navigation_menu_home:
                                 showTip(menuItem.getTitle().toString());
                                 break;
+                            case R.id.navigation_personal_setting:
+                                showTip(menuItem.getTitle().toString());
+                                intent = new Intent(MainActivity.this, PersonalActivity.class);
+                                startActivity(intent);
+                                break;
                             case R.id.navigation_menu_setting:
                                 showTip(menuItem.getTitle().toString());
                                  intent = new Intent(MainActivity.this, SettingActivity.class);
@@ -272,7 +364,7 @@ public class MainActivity extends BaseActivity {
                             case R.id.navigation_menu_logout:
                                 showTip(menuItem.getTitle().toString());
                                 CacheRepository cacheRepository = CacheRepository.getInstance();
-                                cacheRepository.setLogin(false);
+                                cacheRepository.logout();//清除数据
                                  intent = new Intent(MainActivity.this, LoginActivity.class);
                                 startActivity(intent);
                                 break;
@@ -293,15 +385,6 @@ public class MainActivity extends BaseActivity {
                 });
     }
 
-    private void showTip(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-                mToast.show();
-            }
-        });
-    }
     private void close() {
         this.finishAll();
     }
@@ -311,6 +394,8 @@ public class MainActivity extends BaseActivity {
         Log.d("save", "关闭主界面");
         CacheRepository cacheRepository = CacheRepository.getInstance();
         cacheRepository.saveConfig(this);
+        unbindService(mConnection);
+        unregisterReceiver(connectReceiver);
         super.onDestroy();
     }
 }

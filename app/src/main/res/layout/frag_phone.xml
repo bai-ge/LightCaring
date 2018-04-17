@@ -4,15 +4,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_telephone">
+    android:background="@drawable/bg_phone2">
     <!--信息显示区域-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"
         android:layout_marginLeft="@dimen/fab_margin"
         android:layout_marginRight="@dimen/fab_margin"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -36,9 +37,9 @@
             android:layout_height="200dp"
             android:layout_gravity="center"
             android:layout_margin="@dimen/fab_margin"
-            android:src="@drawable/head_img"
-            app:civ_border_color="@color/colorWhite"
-            app:civ_border_width="1dp"/>
+            android:src="@drawable/head4"
+            app:civ_border_color="@color/gray_status"
+            app:civ_border_width="0dp"/>
 
         <TextView
             android:id="@+id/user_name"
@@ -48,7 +49,7 @@
             android:layout_margin="5dp"
             android:text="@string/app_name"
             android:textAlignment="center"
-            android:textColor="@color/colorWhite"
+            android:textColor="@color/gray_tab"
             android:textSize="25sp"/>
 
         <TextView
@@ -60,6 +61,18 @@
             android:textAlignment="center"
             android:textColor="@color/colorWhitePrimary"/>
 
+        <!--<pl.droidsonroids.gif.GifImageView-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:src="@drawable/progress" />-->
+        <com.carefor.view.ProgressBall
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="5dp"
+            app:dot_color="@color/colorPrimary"/>
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
@@ -67,7 +80,7 @@
             android:layout_margin="5dp"
             android:text="正在连接……"
             android:textAlignment="center"
-            android:textColor="@color/colorWhitePrimary"/>
+            android:textColor="@color/gray_tab"/>
 
         <EditText
             android:id="@+id/log"

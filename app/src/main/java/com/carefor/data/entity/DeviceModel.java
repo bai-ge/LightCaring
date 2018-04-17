@@ -1,27 +1,47 @@
 package com.carefor.data.entity;
 
 import com.carefor.connect.ConnectedByTCP;
+import com.carefor.connect.ConnectedByUDP;
 
+import java.util.ArrayList;
+
+
+/*描述的是对方的设备信息*/
 public class DeviceModel {
+
 	private String deviceId;
-	
-	private int status;
+
+    private boolean beConnected;//主动连接或被动连接
 
 	private long loginTime;
 
 	private String localIp;
 	private String remoteIp;
 
+    private int acceptPort;//tcp监听端口
 	private int localPort;
 	private int remotePort;
 
 	private int localUdpPort;
 	private int remoteUdpPort;
 
-	private ConnectedByTCP connector;
+	private ConnectedByTCP connectedByTCP;
+	
+	private ConnectedByUDP connectedByUDP;
+
+
+    private ArrayList<Candidate> candidates;
+
+    public ArrayList<Candidate> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(ArrayList<Candidate> candidates) {
+        this.candidates = candidates;
+    }
 
 	public DeviceModel() {
-		loginTime = System.currentTimeMillis();
+        loginTime = 0;
 	}
 
 	public DeviceModel(String deviceid, String userid) {
@@ -29,15 +49,23 @@ public class DeviceModel {
 		this.deviceId = deviceid;
 	}
 
-	public String getDeviceidId() {
+	public String getDeviceId() {
 		return deviceId;
 	}
 
-	public void setDeviceidId(String deviceid) {
+	public void setDeviceId(String deviceid) {
 		this.deviceId = deviceid;
 	}
-	
-	public long getLoginTime() {
+
+    public boolean isBeConnected() {
+        return beConnected;
+    }
+
+    public void setBeConnected(boolean beConnected) {
+        this.beConnected = beConnected;
+    }
+
+    public long getLoginTime() {
 		return loginTime;
 	}
 
@@ -53,22 +81,22 @@ public class DeviceModel {
 		this.localIp = localIp;
 	}
 
-	public int getLocalPort() {
+    public int getAcceptPort() {
+        return acceptPort;
+    }
+
+    public void setAcceptPort(int acceptPort) {
+        this.acceptPort = acceptPort;
+    }
+
+    public int getLocalPort() {
 		return localPort;
 	}
 
 	public void setLocalPort(int localPort) {
 		this.localPort = localPort;
 	}
-
-	public int getStatus() {
-		return status;
-	}
-
-	public void setStatus(int status) {
-		this.status = status;
-	}
-
+	
 	public String getRemoteIp() {
 		return remoteIp;
 	}
@@ -101,12 +129,22 @@ public class DeviceModel {
 		this.remoteUdpPort = remoteUdpPort;
 	}
 
-	public ConnectedByTCP getConnector() {
-		return connector;
+	public ConnectedByTCP getConnectedByTCP() {
+		return connectedByTCP;
 	}
 
-	public void setConnector(ConnectedByTCP connector) {
-		this.connector = connector;
+	public void setConnectedByTCP(ConnectedByTCP connector) {
+		this.connectedByTCP = connector;
+	}
+	
+	
+
+	public ConnectedByUDP getConnectedByUDP() {
+		return connectedByUDP;
+	}
+
+	public void setConnectedByUDP(ConnectedByUDP connectedByUDP) {
+		this.connectedByUDP = connectedByUDP;
 	}
 
 	@Override

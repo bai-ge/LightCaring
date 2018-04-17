@@ -18,7 +18,6 @@ import com.carefor.util.ActivityUtils;
  */
 
 public class LoginActivity extends BaseActivity {
-    private Toast mToast;
 
 
     private LoginPresenter.OnPresenterListener mOnPresenterListener = new LoginPresenter.OnPresenterListener() {
@@ -37,7 +36,6 @@ public class LoginActivity extends BaseActivity {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_common);
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
         LoginFragment loginFragment = (LoginFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
         if(loginFragment == null){
@@ -65,15 +63,7 @@ public class LoginActivity extends BaseActivity {
         }
         return super.onKeyDown(keyCode, event);//继续执行父类其他点击事件
     }
-    private void showTip(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-                mToast.show();
-            }
-        });
-    }
+
 
 
 }

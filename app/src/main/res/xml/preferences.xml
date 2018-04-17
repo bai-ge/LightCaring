@@ -1,79 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="个人信息"
+        android:key="pre_key_personal_settings"
         android:summary="个人信息"
-        android:key="pre_key_personal_settings">
+        android:title="个人信息">
         <EditTextPreference
+            android:key="pre_key_name"
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:key="pre_key_name"
-            android:title="姓名："
-            android:summary="请输入姓名"/>
+            android:summary="请输入姓名"
+            android:title="姓名："/>
         <ListPreference
             android:defaultValue="0"
-            android:key="pre_key_sex"
-            android:title="性别:"
-            android:summary="请选择性别"
             android:dialogTitle="性别选择"
             android:entries="@array/sex"
-            android:entryValues="@array/sex"/>
+            android:entryValues="@array/sex"
+            android:key="pre_key_sex"
+            android:summary="请选择性别"
+            android:title="性别:"/>
         <EditTextPreference
-            android:title="年龄"
+            android:key="pre_key_age"
             android:numeric="integer"
             android:summary="请输入年龄"
-            android:key="pre_key_age"/>
+            android:title="年龄"/>
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="报警设置"
+        android:key="pre_key_alert_settings"
         android:summary="报警设置"
-        android:key="pre_key_alert_settings">
+        android:title="报警设置">
         <RingtonePreference
-            android:title="铃声设置"
-            android:summary="铃声设置"
             android:hint="铃声设置"
-            android:maxLines="1"
-            android:showSilent="false"
             android:key="pre_key_alert"
-            android:ringtoneType="alarm"/>
+            android:maxLines="1"
+            android:ringtoneType="alarm"
+            android:showSilent="false"
+            android:summary="铃声设置"
+            android:title="铃声设置"/>
         <SwitchPreference
-            android:title="震动"
             android:hint="震动开关"
+            android:key="pre_key_vibrate"
             android:summary="震动开关"
-            android:key="pre_key_vibrate"/>
+            android:title="震动"/>
         <EditTextPreference
-            android:title="紧急联系人"
             android:hint="紧急联系人电话"
+            android:key="pre_key_phone"
             android:summary="紧急联系人电话"
-            android:key="pre_key_phone"/>
+            android:title="紧急联系人"/>
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="通话服务器配置"
+        android:key="pre_key_server_settings"
         android:summary="服务器信息"
-        android:key="pre_key_server_settings">
+        android:title="通话服务器配置">
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="服务器列表"
+            android:entries="@array/server_ip"
+            android:entryValues="@array/server_ip"
+            android:key="pre_key_server_ip_array"
+            android:summary="请选择服务器"
+            android:title="服务器IP"/>
         <EditTextPreference
+            android:hint="请输入IP"
+            android:key="pre_key_phone_server_ip"
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:key="pre_key_phone_server_ip"
-            android:title="服务器IP"
             android:summary="请输入IP"
-            android:hint="请输入IP"/>
+            android:title="其它服务器IP"/>
         <EditTextPreference
-            android:title="服务器TCP端口"
             android:hint="请输入端口号"
-            android:summary="请输入端口号"
+            android:key="pre_key_phone_server_tcp_port"
             android:numeric="integer"
-            android:key="pre_key_phone_server_tcp_port"/>
+            android:summary="请输入端口号"
+            android:title="服务器TCP端口"/>
         <EditTextPreference
-            android:title="服务器UDP端口"
             android:hint="请输入端口号"
-            android:summary="请输入端口号"
+            android:key="pre_key_phone_server_udp_port"
             android:numeric="integer"
-            android:key="pre_key_phone_server_udp_port"/>
+            android:summary="请输入端口号"
+            android:title="服务器UDP端口"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

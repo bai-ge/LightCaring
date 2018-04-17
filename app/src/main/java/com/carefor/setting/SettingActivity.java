@@ -1,12 +1,12 @@
 package com.carefor.setting;
 
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.RingtonePreference;
@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.mainui.R;
 import com.carefor.util.JPushTools;
+import com.carefor.util.StringValidation;
 
 
 public class SettingActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceChangeListener {
@@ -29,6 +30,7 @@ public class SettingActivity extends PreferenceActivity implements SharedPrefere
     public static final String KEY_ALERT = "pre_key_alert";
     public static final String KEY_VIBRATE = "pre_key_vibrate";
     public static final String KEY_PHONE = "pre_key_phone";
+    public static final String KEY_PHONE_SERVER_IP_ARRAY = "pre_key_server_ip_array";
     public static final String KEY_PHONE_SERVER_IP = "pre_key_phone_server_ip";
     public static final String KEY_TCP_PORT = "pre_key_phone_server_tcp_port";
     public static final String KEY_UDP_PORT = "pre_key_phone_server_udp_port";
@@ -38,6 +40,8 @@ public class SettingActivity extends PreferenceActivity implements SharedPrefere
     public static final String DEFAULT_UDP_PORT = "12059";
 
     private RingtonePreference mRingtone;
+
+    private EditTextPreference mEpServerIp = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,6 +73,17 @@ public class SettingActivity extends PreferenceActivity implements SharedPrefere
         findPreference(KEY_PHONE_SERVER_IP).setSummary(sp.getString(KEY_PHONE_SERVER_IP, DEFAULT_PHONE_SERVER_IP));
         findPreference(KEY_TCP_PORT).setSummary(sp.getString(KEY_TCP_PORT, DEFAULT_TCP_PORT));
         findPreference(KEY_UDP_PORT).setSummary(sp.getString(KEY_UDP_PORT, DEFAULT_UDP_PORT));
+
+
+        mEpServerIp = (EditTextPreference) findPreference(KEY_PHONE_SERVER_IP);
+        String serverIp = sp.getString(KEY_PHONE_SERVER_IP_ARRAY, "");
+        if(StringValidation.validateRegex(serverIp, StringValidation.RegexIP)){
+            mEpServerIp.setEnabled(false);
+        }else{
+            mEpServerIp.setEnabled(true);
+        }
+        findPreference(KEY_PHONE_SERVER_IP_ARRAY).setSummary(serverIp);
+
 
         String server_ip = sp.getString(KEY_PHONE_SERVER_IP, DEFAULT_PHONE_SERVER_IP);
         if(server_ip.isEmpty()){
@@ -123,13 +138,34 @@ public class SettingActivity extends PreferenceActivity implements SharedPrefere
                 Preference phonePre = findPreference(key);
                 phonePre.setSummary(sharedPreferences.getString(key, ""));
                 break;
+            case KEY_PHONE_SERVER_IP_ARRAY:
+                Log.d(TAG, KEY_PHONE_SERVER_IP_ARRAY+" ="+sharedPreferences.getString(KEY_PHONE_SERVER_IP_ARRAY, ""));
+                String serverIp = sharedPreferences.getString(KEY_PHONE_SERVER_IP_ARRAY, "");
+                findPreference(key).setSummary(serverIp);
+                if(StringValidation.validateRegex(serverIp, StringValidation.RegexIP)){
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(KEY_PHONE_SERVER_IP, serverIp);
+                    editor.commit();
+                    editor.apply();
+
+                    if(mEpServerIp != null){
+                        mEpServerIp.setEnabled(false);
+                    }
+                }else{
+                   if(mEpServerIp != null){
+                       mEpServerIp.setEnabled(true);
+                   }
+                }
+                break;
             case KEY_PHONE_SERVER_IP:
                 Preference ip = findPreference(key);
                 String server_ip = sharedPreferences.getString(key, DEFAULT_PHONE_SERVER_IP);
+
                 if(server_ip.isEmpty()){
                     server_ip = "请输入IP";
                 }
                 ip.setSummary(server_ip);
+
                 break;
             case KEY_TCP_PORT:
                 Preference tcp = findPreference(key);

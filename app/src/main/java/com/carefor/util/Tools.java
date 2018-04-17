@@ -2,29 +2,23 @@ package com.carefor.util;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.text.TextUtils;
-import android.util.Log;
+import android.support.v4.content.PermissionChecker;
+import android.util.Base64;
 
-import com.carefor.connect.Connector;
-import com.example.jpushdemo.Logger;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.logging.SimpleFormatter;
 
-import cn.jpush.android.api.JPushInterface;
 
 /**
  * Created by baige on 2017/12/27.
@@ -32,6 +26,7 @@ import cn.jpush.android.api.JPushInterface;
 
 public class Tools {
 
+    public final static String DEFAULT_ENCODE = "UTF-8";
 
     public static String MD5(String s) {
         try {
@@ -95,6 +90,12 @@ public class Tools {
             return true;
         return false;
     }
+    public static boolean isEquals(Object a, Object b){
+        if(a == null || b == null){
+            return false; //注意 都为null时还是不相等
+        }
+        return a.equals(b);
+    }
     public static String formatTime(long time){
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateFormat.format(new Date(time));
@@ -119,49 +120,41 @@ public class Tools {
         return false;
     }
 
-    /**
-     * 判断是否有网络连接
-     *
-     * @param context
-     * @return
-     */
-    public static void checkNetwork(Context context){
-        ConnectivityManager manager = (ConnectivityManager) context
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = manager.getActiveNetworkInfo();
-        if (activeNetwork != null) { // connected to the internet
-            if (activeNetwork.isConnected()) {
-                if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
-                    // connected to wifi
-                    Connector.getInstance().setWifiValid(true);
-                    Log.d("network", "当前WiFi连接可用 ");
-                } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-                    // connected to the mobile provider's data plan
-                    Connector.getInstance().setNetworkValid(true);
-                    Log.d("network", "当前移动网络连接可用 ");
-                }
-                //TODO 尝试连接服务器
-                Connector.getInstance().afxConnectServer();
-            } else {
-                Log.d("network", "当前没有网络连接，请确保你已经打开网络 ");
-                Connector.getInstance().setWifiValid(false);
-                Connector.getInstance().setNetworkValid(false);
+    public static String dataToString(byte[] data, String charsetName) {
+        if (data != null) {
+            try {
+                return new String(data, charsetName);
             }
-
-
-            Log.d("network", "info.getTypeName()" + activeNetwork.getTypeName());
-            Log.d("network", "getSubtypeName()" + activeNetwork.getSubtypeName());
-            Log.d("network", "getState()" + activeNetwork.getState());
-            Log.d("network", "getDetailedState()"
-                    + activeNetwork.getDetailedState().name());
-            Log.d("network", "getDetailedState()" + activeNetwork.getExtraInfo());
-            Log.d("network", "getType()" + activeNetwork.getType());
-        } else {   // not connected to the internet
-            Log.d("network", "当前没有网络连接，请确保你已经打开网络 ");
-            Connector.getInstance().setWifiValid(false);
-            Connector.getInstance().setNetworkValid(false);
+            catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
+        return null;
+    }
+
+    public static byte[] stringToData(String string, String charsetName) {
+        if (string != null) {
+            try {
+                return string.getBytes(charsetName);
+            }
+            catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public static String getServerDeviceId() {
+        byte[] buf = toByte(System.currentTimeMillis());
+        String timeString = Base64.encodeToString(buf, Base64.NO_PADDING);//会多出一个换行符
+        return "0"+timeString.substring(0, timeString.length() - 1)+String.format("%03d", Integer.valueOf((int) (Math.random()*1000)));
+    }
+
+
+    public static String getMobileDeviceId() {
+        byte[] buf = toByte(System.currentTimeMillis());
+        String timeString = Base64.encodeToString(buf, Base64.NO_PADDING);
+        return "1"+timeString.substring(0, timeString.length() - 1)+String.format("%03d", Integer.valueOf((int) (Math.random()*1000)));
     }
 
     // 打印所有的 intent extra 数据
@@ -200,5 +193,18 @@ public class Tools {
         parcel.recycle();
 
         return(result);
+    }
+
+    /**
+     * 判断SD卡是否存在，并且是否具有读写权限
+     *
+     * @return
+     */
+    public static boolean checkPermissionWriteExternalStorage(Context context) {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) &&
+                PermissionChecker.checkSelfPermission(context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        return false;
     }
 }

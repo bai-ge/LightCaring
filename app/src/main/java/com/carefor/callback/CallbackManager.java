@@ -5,6 +5,7 @@ import com.carefor.util.Tools;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Timer;
 
 /**
  * Created by baige on 2018/2/13.
@@ -17,8 +18,11 @@ public class CallbackManager {
 
     private Map<String, BaseCallBack> mCallBackMap;
 
+    private Timer mTimer;
+
     private CallbackManager(){
         mCallBackMap = Collections.synchronizedMap(new LinkedHashMap<String, BaseCallBack>());
+        mTimer = new Timer();
     }
 
     public static CallbackManager getInstance() {
@@ -36,6 +40,10 @@ public class CallbackManager {
         if(baseCallBack != null && !Tools.isEmpty(baseCallBack.getId())){
             synchronized (mCallBackMap){
                 mCallBackMap.put(baseCallBack.getId(), baseCallBack);
+                if(baseCallBack.getTimeout() <= 0){
+                    baseCallBack.setTimeout(30000);
+                }
+                mTimer.schedule(baseCallBack.getTimerTask(), baseCallBack.getTimeout());
             }
         }
     }

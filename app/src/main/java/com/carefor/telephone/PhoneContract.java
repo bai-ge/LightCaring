@@ -32,9 +32,15 @@ public interface PhoneContract {
 
         void showLog(String text);
 
+        void showLog(TelePhone.LogBean logBean);
+
+        void showProgress(boolean isShow);
+
         void clearLog();
 
         void hidePickUpBtn();
+
+        void setAudioMode(int mode);
 
         void close();
     }

@@ -6,8 +6,10 @@ import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.utils.DistanceUtil;
 import com.carefor.callback.SeniorCallBack;
 import com.carefor.data.entity.Location;
+import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
+import com.carefor.data.source.remote.Parm;
 import com.carefor.util.Tools;
 
 import org.json.JSONException;
@@ -40,16 +42,39 @@ public class LocationPresenter implements LocationContract.Presenter {
 
     @Override
     public void start() {
-        //30秒请求一次位置信息
-        if(mTimer == null){
-            mTimer = new Timer();
-        }
-        mTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                loadLocation();
+
+        //检查用户身份
+        User user = CacheRepository.getInstance().who();
+        if(user != null){
+            if(user.getType() == 1){
+                mFragment.isGuardian(true);
+                //30秒请求一次位置信息
+                if(mTimer == null){
+                    mTimer = new Timer();
+                }
+                mTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        loadLocation();
+                    }
+                }, 0, 1000 * 30);
+            }else if(user.getType() == 2){
+                mFragment.isGuardian(false);
             }
-        }, 0, 1000 * 30);
+        }else{
+            mFragment.isGuardian(true);
+            //30秒请求一次位置信息
+            if(mTimer == null){
+                mTimer = new Timer();
+            }
+            mTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    loadLocation();
+                }
+            }, 0, 1000 * 30);
+        }
+
     }
     public void stop(){
         if(mTimer != null){
@@ -61,7 +86,7 @@ public class LocationPresenter implements LocationContract.Presenter {
     @Override
     public void askLocation() {
         mFragment.showInform("正在请求打开被监护人设备定位功能……");
-        CacheRepository cacheRepository = CacheRepository.getInstance();
+        final CacheRepository cacheRepository = CacheRepository.getInstance();
         SeniorCallBack seniorCallBack = new SeniorCallBack() {
             @Override
             public void success() {
@@ -92,6 +117,7 @@ public class LocationPresenter implements LocationContract.Presenter {
                 super.loadLocation(loc);
                 mFragment.showInform("被监护人设备已经成功开启定位功能");
                 mFragment.showPLocation(loc);
+                cacheRepository.setShowNotification(true);
                 mFragment.showTip("收到位置信息");
             }
         };
@@ -100,14 +126,22 @@ public class LocationPresenter implements LocationContract.Presenter {
 
         JSONObject content = new JSONObject();
         try {
-            content.put("MessageType", String.valueOf(2));
-            content.put("Router", String.valueOf(cacheRepository.who().getUid()));
-            content.put("Callback", seniorCallBack.getId());
+            content.put(Parm.MESSAGE_TYPE, String.valueOf(2));
+            content.put(Parm.ROUTER, String.valueOf(cacheRepository.who().getUid()));
+            content.put(Parm.Callback, seniorCallBack.getId());
+            content.put(Parm.SHOW_NOTIFICATION, String.valueOf(!cacheRepository.isShowNotification()));
+            content.put(Parm.FROM, String.valueOf(cacheRepository.who().getUid()));
+            content.put(Parm.TO, String.valueOf(cacheRepository.getSelectUser().getUid()));
             Log.d(TAG, "content" + content.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        mRepositor.asynAskLocation(defalutNum++, "我需要获知被监护人位置的一条指令", cacheRepository.who().getUid(), cacheRepository.getSelectUser().getUid(), content.toString(), seniorCallBack);
+        if(cacheRepository.isShowNotification()){
+            mRepositor.asynSendMessageTo(cacheRepository.who().getUid(), cacheRepository.getSelectUser().getUid(), content.toString(), seniorCallBack);
+        }else{
+            mRepositor.asynAskLocation(defalutNum++, "我需要获知被监护人位置的一条指令", cacheRepository.who().getUid(), cacheRepository.getSelectUser().getUid(), content.toString(), seniorCallBack);
+        }
+
     }
 
     @Override
@@ -125,7 +159,7 @@ public class LocationPresenter implements LocationContract.Presenter {
                 @Override
                 public void success() {
                     super.success();
-                    mFragment.showTip("发送成功");
+                    mFragment.showInform("加载成功");
                 }
 
                 @Override
@@ -185,7 +219,7 @@ public class LocationPresenter implements LocationContract.Presenter {
                 @Override
                 public void success() {
                     super.success();
-                    mFragment.showTip("发送成功");
+                    mFragment.showInform("加载成功");
                 }
 
                 @Override
@@ -250,6 +284,7 @@ public class LocationPresenter implements LocationContract.Presenter {
             if(locList.get(i).getTime() + day < limitTime){
                 continue;
             }
+
             if(points.size() > 2){
                 LatLng lastPoint = points.get(points.size() - 1);
                 LatLng lessPoint = points.get(points.size() - 2);
@@ -263,7 +298,7 @@ public class LocationPresenter implements LocationContract.Presenter {
                 points.remove(0);
             }
         }
-        mFragment.setTargetDialog(locList.get(size-1).getDescription()+"\n"+Tools.formatTime(locList.get(size-1).getTime()));
-        mFragment.showTargetTrack(points);
+        mFragment.showLocationDialog(locList.get(size-1));//仅展示窗口
+        mFragment.showTargetTrack(points);//展示轨迹
     }
 }

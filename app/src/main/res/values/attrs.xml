@@ -39,4 +39,7 @@
             <enum name="bottom" value="3" />
         </attr>
     </declare-styleable>
+    <declare-styleable name="ProgressBall" tools:ignore="ResourceName">
+        <attr name="dot_color" format="color|reference" />
+    </declare-styleable>
 </resources>

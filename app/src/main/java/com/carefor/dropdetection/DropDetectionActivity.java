@@ -28,8 +28,6 @@ public class DropDetectionActivity extends BaseActivity {
     private Toolbar mToolbar;
     private SwitchButton mSwitchButton;
 
-    private Toast mToast;
-
     private TextView mUserName;
 
     private Repository mRepository;
@@ -41,7 +39,7 @@ public class DropDetectionActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drop_detection);
 
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+
 
         mRepository = Repository.getInstance(LocalRepository.getInstance(getApplicationContext()));
 
@@ -145,15 +143,7 @@ public class DropDetectionActivity extends BaseActivity {
         }
     }
 
-    private void showTip(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-                mToast.show();
-            }
-        });
-    }
+
 
     private void askDropSwitch(){
         //询问跌倒监测状态

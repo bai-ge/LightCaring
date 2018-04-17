@@ -9,8 +9,6 @@ import android.net.wifi.WifiManager;
 import android.os.Parcelable;
 import android.util.Log;
 
-import com.carefor.connect.Connector;
-import com.carefor.data.source.cache.CacheRepository;
 
 /**
  * Created by baige on 2018/3/6.
@@ -30,7 +28,7 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver{
             Log.e(TAG, "wifiState" + wifiState);
             switch (wifiState) {
                 case WifiManager.WIFI_STATE_DISABLED:
-                    Connector.getInstance().setWifiEnable(false);
+//                    Connector.getInstance().setWifiEnable(false);
                     break;
                 case WifiManager.WIFI_STATE_DISABLING:
 
@@ -38,7 +36,7 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver{
                 case WifiManager.WIFI_STATE_ENABLING:
                     break;
                 case WifiManager.WIFI_STATE_ENABLED:
-                    Connector.getInstance().setWifiEnable(true);
+//                    Connector.getInstance().setWifiEnable(true);
                     break;
                 case WifiManager.WIFI_STATE_UNKNOWN:
                     break;
@@ -61,9 +59,9 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver{
                 boolean isConnected = state == NetworkInfo.State.CONNECTED;// 当然，这边可以更精确的确定状态
                 Log.e(TAG, "isConnected" + isConnected);
                 if (isConnected) {
-                    Connector.getInstance().setWifiValid(true);
+//                    Connector.getInstance().setWifiValid(true);
                 } else {
-                    Connector.getInstance().setWifiValid(false);
+//                    Connector.getInstance().setWifiValid(false);
                 }
             }
         }
@@ -80,19 +78,19 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver{
                 if (activeNetwork.isConnected()) {
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
                         // connected to wifi
-                        Connector.getInstance().setWifiValid(true);
+//                        Connector.getInstance().setWifiValid(true);
                         Log.e(TAG, "当前WiFi连接可用 ");
                     } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
                         // connected to the mobile provider's data plan
-                        Connector.getInstance().setNetworkValid(true);
+//                        Connector.getInstance().setNetworkValid(true);
                         Log.e(TAG, "当前移动网络连接可用 ");
                     }
                     //TODO 尝试连接服务器
-                    Connector.getInstance().afxConnectServer();
+//                    Connector.getInstance().afxConnectServer();
                 } else {
                     Log.e(TAG, "当前没有网络连接，请确保你已经打开网络 ");
-                    Connector.getInstance().setWifiValid(false);
-                    Connector.getInstance().setNetworkValid(false);
+//                    Connector.getInstance().setWifiValid(false);
+//                    Connector.getInstance().setNetworkValid(false);
                 }
 
 
@@ -105,8 +103,8 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver{
                 Log.e(TAG, "getType()" + activeNetwork.getType());
             } else {   // not connected to the internet
                 Log.e(TAG, "当前没有网络连接，请确保你已经打开网络 ");
-                Connector.getInstance().setWifiValid(false);
-                Connector.getInstance().setNetworkValid(false);
+//                Connector.getInstance().setWifiValid(false);
+//                Connector.getInstance().setNetworkValid(false);
 
             }
         }
