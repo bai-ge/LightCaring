@@ -22,6 +22,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.carefor.AppConfigure;
 import com.carefor.broadcast.SendMessageBroadcast;
 import com.carefor.broadcast.WakeReceiver;
 import com.carefor.connect.BaseConnector;

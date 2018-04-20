@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.baidu.mapapi.model.LatLng;
+import com.carefor.AppConfigure;
 import com.carefor.broadcast.SendMessageBroadcast;
 import com.carefor.data.entity.Candidate;
 import com.carefor.data.entity.DeviceModel;
@@ -159,10 +160,10 @@ public class CacheRepository {
     public void readConfig(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        String ip = preferences.getString(SettingActivity.KEY_PHONE_SERVER_IP, SettingActivity.DEFAULT_PHONE_SERVER_IP);
+        String ip = preferences.getString(AppConfigure.KEY_PHONE_SERVER_IP, AppConfigure.DEFAULT_PHONE_SERVER_IP);
 
-        mServerPort = Integer.valueOf(preferences.getString(SettingActivity.KEY_TCP_PORT, SettingActivity.DEFAULT_TCP_PORT));
-        mServerUdpPort = Integer.valueOf(preferences.getString(SettingActivity.KEY_UDP_PORT, SettingActivity.DEFAULT_UDP_PORT));
+        mServerPort = Integer.valueOf(preferences.getString(AppConfigure.KEY_PHONE_SERVER_TCP_PORT, AppConfigure.DEFAULT_TCP_PORT));
+        mServerUdpPort = Integer.valueOf(preferences.getString(AppConfigure.KEY_PHONE_SERVER_UDP_PORT, AppConfigure.DEFAULT_UDP_PORT));
         if(!JPushTools.isEmpty(ip) && !ip.equals(mServerIp)){
             mServerIp = ip;
 //            Connector.getInstance().afxConnectServer();
@@ -170,21 +171,19 @@ public class CacheRepository {
             SendMessageBroadcast.getInstance().connectServer(ip, ""+mServerPort);
         }
         if (mSelectUser == null) {
-            String tel = preferences.getString(SettingActivity.KEY_PHONE, "");
-            String em_name = preferences.getString("emergency_name", "");
-            String talkWith = preferences.getString("emergency_device_id", "");
+            String em_name = preferences.getString(AppConfigure.KEY_SELECT_USERNAME, "");
+            String talkWith = preferences.getString(AppConfigure.KEY_SELECT_DEVICE_ID, "");
             mSelectUser = new User();
             mSelectUser.setDeviceId(talkWith);
             mSelectUser.setName(em_name);
-            mSelectUser.setTel(tel);
-            if(preferences.contains("select_id")){
-                int id = preferences.getInt("select_id", 0);
+            if(preferences.contains(AppConfigure.KEY_SELECT_UID)){
+                int id = preferences.getInt(AppConfigure.KEY_SELECT_UID, 0);
                 mSelectUser.setUid(id);
             }
         }
-        isNeedOpenGuidepage = preferences.getBoolean("guide_page", true);
-        String name = preferences.getString(SettingActivity.KEY_NAME, "");
-        String pas = preferences.getString("password", "");
+        isNeedOpenGuidepage = preferences.getBoolean(AppConfigure.KEY_GUIDE_PAGE, true);
+        String name = preferences.getString(AppConfigure.KEY_USERNAME, "");
+        String pas = preferences.getString(AppConfigure.KEY_PSW, "");
         mDeviceId = JPushInterface.getRegistrationID(context);
         if (isLogin() && mLoginUser != null) {
             mLoginUser.setName(name);
@@ -193,10 +192,10 @@ public class CacheRepository {
             mLoginUser = new User(name, pas);
         }
         mLoginUser.setDeviceId(mDeviceId);
-        mRingUri = preferences.getString(SettingActivity.KEY_ALERT, "");
+        mRingUri = preferences.getString(AppConfigure.KEY_PHONE_RING, "");
         //定位
-        mCurrentLat = preferences.getFloat("current_lat", 116.40399f);
-        mCurrentLon = preferences.getFloat("current_lon", 39.915087f);
+        mCurrentLat = preferences.getFloat(AppConfigure.KEY_CURRENT_LAT, 116.40399f);
+        mCurrentLon = preferences.getFloat(AppConfigure.KEY_CURRENT_LON, 39.915087f);
         Log.d("save", "读取配置" + mLoginUser);
     }
 
@@ -207,28 +206,25 @@ public class CacheRepository {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = preferences.edit();
         if (mLoginUser != null) {
-            editor.putString(SettingActivity.KEY_NAME, mLoginUser.getName());
-            editor.putString("password", mLoginUser.getPsw());
+            editor.putString(AppConfigure.KEY_USERNAME, mLoginUser.getName());
+            editor.putString(AppConfigure.KEY_PSW, mLoginUser.getPsw());
         }
-        editor.putBoolean("guide_page", isNeedOpenGuidepage);
+        editor.putBoolean(AppConfigure.KEY_GUIDE_PAGE, isNeedOpenGuidepage);
         //不能在这里改
-        // editor.putString(SettingActivity.KEY_PHONE_SERVER_IP, mServerIp);
-        // editor.putString(SettingActivity.KEY_TCP_PORT, ""+mServerPort);
-        // editor.putString(SettingActivity.KEY_UDP_PORT, ""+mServerUdpPort);
+        // editor.putString(AppConfigure.KEY_PHONE_SERVER_IP, mServerIp);
+        // editor.putString(AppConfigure.KEY_TCP_PORT, ""+mServerPort);
+        // editor.putString(AppConfigure.KEY_UDP_PORT, ""+mServerUdpPort);
 
         if (mSelectUser != null) {
-            //后面换成紧急联系人 TODO 删除
-            editor.putString(SettingActivity.KEY_PHONE, mSelectUser.getDeviceId());
+            editor.putString(AppConfigure.KEY_SELECT_DEVICE_ID, mSelectUser.getDeviceId());
 
-            editor.putInt("select_id", mSelectUser.getUid());
-            editor.putString(SettingActivity.KEY_PHONE, mSelectUser.getTel());
-            editor.putString("emergency_name", mSelectUser.getName());
-            editor.putString("emergency_device_id", mSelectUser.getDeviceId());
+            editor.putInt(AppConfigure.KEY_SELECT_UID, mSelectUser.getUid());
+            editor.putString(AppConfigure.KEY_SELECT_USERNAME, mSelectUser.getName());
         }
 
         //定位
-        editor.putFloat("current_lat", (float) mCurrentLat);
-        editor.putFloat("current_lon", (float) mCurrentLon);
+        editor.putFloat(AppConfigure.KEY_CURRENT_LAT, (float) mCurrentLat);
+        editor.putFloat(AppConfigure.KEY_CURRENT_LON, (float) mCurrentLon);
 
         editor.commit();
         Log.d("save", "保存配置" + mLoginUser);

@@ -6,7 +6,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.carefor.BaseActivity;
 import com.carefor.callback.SeniorCallBack;
@@ -37,7 +36,7 @@ public class DropDetectionActivity extends BaseActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_drop_detection);
+        setContentView(R.layout.activity_drop);
 
 
 
