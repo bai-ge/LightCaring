@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.carefor.mainui.R;
@@ -197,7 +198,8 @@ public class DrugAlarmActivity extends AppCompatActivity implements OnClickListe
             // 药品盒
             case 1:
                 // 改变药品盒控件的图片和文字颜色
-                setTextView(R.drawable.ic_medicine_select, tv_medicine, mSelectColor);
+//                setTextView(R.drawable.ic_medicine_select, tv_medicine, mSelectColor);
+                setTextView(R.drawable.ic_drug_select, tv_medicine, mSelectColor);
                 break;
         }
 
@@ -210,7 +212,8 @@ public class DrugAlarmActivity extends AppCompatActivity implements OnClickListe
         // 设置吃药提醒Tab为未选中状态
         setTextView(R.drawable.ic_drug_alarm_unselect, tv_drug_alarm, mUnSelectColor);
         // 设置药品盒Tab为未选中状态
-        setTextView(R.drawable.ic_medicine_unselect, tv_medicine, mUnSelectColor);
+//        setTextView(R.drawable.ic_medicine_unselect, tv_medicine, mUnSelectColor);
+        setTextView(R.drawable.ic_drug_unselect, tv_medicine, mUnSelectColor);
 
     }
 
@@ -230,6 +233,7 @@ public class DrugAlarmActivity extends AppCompatActivity implements OnClickListe
         }
         // 设置文字颜色
         textView.setTextColor(color);
+        Button button = new Button(getApplicationContext());
     }
 
     @Override

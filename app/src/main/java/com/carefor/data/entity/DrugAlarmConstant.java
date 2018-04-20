@@ -5,6 +5,10 @@ package com.carefor.data.entity;
  */
 
 public class DrugAlarmConstant {
+
+
+    public static final String IS_NEW_ALARM_CLOCK = "is_new_alarm_clock";
+
     /**
      * 保存的AlarmClock单例
      */

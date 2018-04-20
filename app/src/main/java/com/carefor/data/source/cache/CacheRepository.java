@@ -10,6 +10,7 @@ import com.carefor.broadcast.SendMessageBroadcast;
 import com.carefor.data.entity.Candidate;
 import com.carefor.data.entity.DeviceModel;
 import com.carefor.data.entity.Location;
+import com.carefor.data.entity.Medicine;
 import com.carefor.data.entity.User;
 import com.carefor.data.source.Repository;
 import com.carefor.setting.SettingActivity;
@@ -80,8 +81,33 @@ public class CacheRepository {
     private Map<String, Candidate> candidateMap;
 
 
+    //药品盒
+    private List<Medicine> medicineList;
 
+    public List<Medicine> getMedicineList() {
+        if(medicineList == null){
+            medicineList = new ArrayList<>();
+            defaulMedicineList(medicineList);
+        }
+        return medicineList;
+    }
 
+    private void defaulMedicineList(List<Medicine> list){
+        list.add(new Medicine("布洛芬缓释胶囊", "一粒"));
+        list.add(new Medicine("双黄连含片", "两片"));
+        list.add(new Medicine("维生素C泡腾片", "两片"));
+        list.add(new Medicine("感冒清热颗粒", "一包"));
+        list.add(new Medicine("维C银翘片", "两片"));
+        list.add(new Medicine("阿奇霉素片", "一片"));
+        list.add(new Medicine("川贝清肺糖浆", "20ml"));
+        list.add(new Medicine("口服补液盐散", "一包"));
+        list.add(new Medicine("保济丸", "一包"));
+        list.add(new Medicine("枫蓼肠胃康颗粒", "一包"));
+    }
+
+    public void setMedicineList(List<Medicine> medicineList) {
+        this.medicineList = medicineList;
+    }
 
     //定位相关数据
     private float mCurrentAccracy; //精度(不需要保存)

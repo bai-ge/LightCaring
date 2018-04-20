@@ -186,13 +186,12 @@
 
         <activity android:name="com.carefor.drugalarm.DrugAlarmActivity" />
         <activity
-            android:name="com.carefor.drugalarm.AlarmClockEditActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/Transparent.holo"/>
-        <activity
-            android:name="com.carefor.drugalarm.AlarmClockNewActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/Transparent.holo"/>
+            android:name="com.carefor.drugalarm.alarm.AlarmClockEditActivity"
+            android:launchMode="singleTop"/>
+        <!--<activity-->
+            <!--android:name="com.carefor.drugalarm.AlarmClockNewActivity"-->
+            <!--android:launchMode="singleTop"-->
+            <!--android:theme="@style/Transparent.holo"/>-->
         <activity
             android:name="com.carefor.drugalarm.AlarmSoundActivity"
             android:screenOrientation="portrait"

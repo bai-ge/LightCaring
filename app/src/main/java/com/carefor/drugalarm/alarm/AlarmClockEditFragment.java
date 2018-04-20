@@ -1,41 +1,60 @@
-package com.carefor.drugalarm;
-
+package com.carefor.drugalarm.alarm;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.TimePicker.OnTimeChangedListener;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.carefor.data.entity.AlarmClock;
 import com.carefor.data.entity.DrugAlarmConstant;
+import com.carefor.data.entity.Medicine;
+import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.mainui.R;
 import com.carefor.util.AlarmUtil;
 
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.TreeMap;
 
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
-
-public class AlarmClockNewFragment extends Fragment implements
+public class AlarmClockEditFragment extends Fragment implements AlarmClockContract.View,
         OnClickListener, OnCheckedChangeListener {
+
+    private final static String TAG = AlarmClockEditFragment.class.getCanonicalName();
+
+    private AlarmClockContract.Presenter mPresenter;
+
+    private Toast mToast;
+
+    private Handler mHandler;
+
+    private TextView mTxtTitle;
+
+    private TextView mTxtTag;
 
     /**
      * 铃声选择按钮的requestCode
@@ -56,11 +75,6 @@ public class AlarmClockNewFragment extends Fragment implements
      * 下次响铃时间提示控件
      */
     private TextView mTimePickerTv;
-
-    /**
-     * 响铃倒计时
-     */
-    private String countDown;
 
     /**
      * 周一按钮状态，默认未选中
@@ -117,22 +131,32 @@ public class AlarmClockNewFragment extends Fragment implements
      */
     private TextView mRingDescribe;
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-        mAlarmClock = new AlarmClock();
+        mToast = Toast.makeText(getContext(), "", Toast.LENGTH_SHORT);
+        mHandler = new Handler();
+        Bundle bundle = getActivity().getIntent().getExtras();
+        if(bundle.containsKey(DrugAlarmConstant.ALARM_CLOCK)){
+            mAlarmClock = bundle.getParcelable(DrugAlarmConstant.ALARM_CLOCK);
+        }else{
+            mAlarmClock = new AlarmClock();
+            Calendar calendar = new GregorianCalendar();
+            mAlarmClock.setHour(calendar.get(Calendar.HOUR_OF_DAY));
+            mAlarmClock.setMinute(calendar.get(Calendar.MINUTE));
+        }
+        Log.d(TAG, "medicine size ="+mAlarmClock.getMedicineList().size());
+        Log.d(TAG, mAlarmClock.toString());
         // 闹钟默认开启
         mAlarmClock.setOnOff(1);
     }
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.fragment_alarmclocknew,
+        View view = inflater.inflate(R.layout.fragment_alarmclockedit,
                 container, false);
         // 设置界面背景
         setBackground(view);
@@ -154,21 +178,22 @@ public class AlarmClockNewFragment extends Fragment implements
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        mPresenter.start();
+    }
+
     private void setBounce(View view) {
         ScrollView scrollView = (ScrollView) view.findViewById(R.id.scrollView1);
         OverScrollDecoratorHelper.setUpOverScroll(scrollView);
     }
 
     private void initVolume(View view) {
-        final SharedPreferences share = getActivity().getSharedPreferences(DrugAlarmConstant.EXTRA_SHARE,
-                Activity.MODE_PRIVATE);
-        // 音量
-        final int volume = share.getInt(DrugAlarmConstant.AlARM_VOLUME, 8);
         // 音量控制seekBar
         SeekBar volumeSkBar = (SeekBar) view.findViewById(R.id.volumn_sk);
-
         // 设置当前音量显示
-        volumeSkBar.setProgress(volume);
+        volumeSkBar.setProgress(mAlarmClock.getVolume());
         volumeSkBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
@@ -176,9 +201,12 @@ public class AlarmClockNewFragment extends Fragment implements
                 // 保存设置的音量
                 mAlarmClock.setVolume(seekBar.getProgress());
 
+                final SharedPreferences share = getActivity().getSharedPreferences(DrugAlarmConstant.EXTRA_SHARE,
+                        Activity.MODE_PRIVATE);
                 final SharedPreferences.Editor editor = share.edit();
                 editor.putInt(DrugAlarmConstant.AlARM_VOLUME, seekBar.getProgress());
                 editor.apply();
+
             }
 
             @Override
@@ -192,8 +220,6 @@ public class AlarmClockNewFragment extends Fragment implements
 
             }
         });
-        // 初始化闹钟实例的音量
-        mAlarmClock.setVolume(volume);
 
     }
 
@@ -203,9 +229,8 @@ public class AlarmClockNewFragment extends Fragment implements
      * @param view view
      */
     private void setBackground(View view) {
-        // 新建闹钟界面
-        ViewGroup viewGroup = (ViewGroup) view.findViewById(R.id.new_alarm_clock_llyt);
-
+        // 闹钟修改界面
+        ViewGroup viewGroup = (ViewGroup) view.findViewById(R.id.new_alarm_clock);
         viewGroup.setBackgroundResource(R.color.colorPrimaryDark);
         // 设置页面背景
         //AlarmUtil.setBackground(viewGroup, getActivity());
@@ -224,44 +249,31 @@ public class AlarmClockNewFragment extends Fragment implements
         ImageView acceptAction = (ImageView) view.findViewById(R.id.action_accept);
         acceptAction.setOnClickListener(this);
         // 操作栏标题
-        TextView actionTitle = (TextView) view.findViewById(R.id.action_title);
-        actionTitle.setText(getString(R.string.new_alarm_clock));
+         mTxtTitle = (TextView) view.findViewById(R.id.action_title);
     }
+
 
     /**
      * 设置时间选择
      *
      * @param view view
      */
-    @SuppressWarnings("deprecation")
     private void initTimeSelect(View view) {
         // 下次响铃提示
         mTimePickerTv = (TextView) view.findViewById(R.id.time_picker_tv);
-        countDown = getResources()
-                .getString(R.string.countdown_day_hour_minute);
-//        // 设置下次响铃时间提示内容
-//        mTimePickerTv.setText(String.format(countDown, 1, 0, 0));
-
+        // 计算倒计时显示
+        displayCountDown();
         // 闹钟时间选择器
         TimePicker timePicker = (TimePicker) view.findViewById(R.id.time_picker);
         timePicker.setIs24HourView(true);
+        // 初始化时间选择器的小时
+        //noinspection deprecation
+        timePicker.setCurrentHour(mAlarmClock.getHour());
+        // 初始化时间选择器的分钟
+        //noinspection deprecation
+        timePicker.setCurrentMinute(mAlarmClock.getMinute());
 
-        SharedPreferences share = getActivity().getSharedPreferences(
-                DrugAlarmConstant.EXTRA_SHARE, Activity.MODE_PRIVATE);
-        int currentHour = share.getInt(DrugAlarmConstant.DEFAULT_ALARM_HOUR, timePicker.getCurrentHour());
-        int currentMinute = share.getInt(DrugAlarmConstant.DEFAULT_ALARM_MINUTE, timePicker.getCurrentMinute());
-
-        timePicker.setCurrentHour(currentHour);
-        timePicker.setCurrentMinute(currentMinute);
-
-        // 初始化闹钟实例的小时
-        mAlarmClock.setHour(currentHour);
-        // 初始化闹钟实例的分钟
-        mAlarmClock.setMinute(currentMinute);
-
-        displayCountDown();
-
-        timePicker.setOnTimeChangedListener(new OnTimeChangedListener() {
+        timePicker.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
 
             @Override
             public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
@@ -276,20 +288,15 @@ public class AlarmClockNewFragment extends Fragment implements
         });
     }
 
+
     /**
      * 设置重复信息
      *
      * @param view view
      */
     private void initRepeat(View view) {
-        // 初始化闹钟实例的重复
-        mAlarmClock.setRepeat(getString(R.string.repeat_once));
-        mAlarmClock.setWeeks(null);
-
         // 重复描述
         mRepeatDescribe = (TextView) view.findViewById(R.id.repeat_describe);
-        mRepeatStr = new StringBuilder();
-        mMap = new TreeMap<>();
 
         // 周选择按钮
         // 周一按钮
@@ -314,7 +321,44 @@ public class AlarmClockNewFragment extends Fragment implements
         friday.setOnCheckedChangeListener(this);
         saturday.setOnCheckedChangeListener(this);
         sunday.setOnCheckedChangeListener(this);
+
+        mRepeatStr = new StringBuilder();
+        mMap = new TreeMap<>();
+
+        String weeks = mAlarmClock.getWeeks();
+        // 不是单次响铃时
+        if (weeks != null) {
+            final String[] weeksValue = weeks.split(",");
+            for (String aWeeksValue : weeksValue) {
+                int week = Integer.parseInt(aWeeksValue);
+                switch (week) {
+                    case 1:
+                        sunday.setChecked(true);
+                        break;
+                    case 2:
+                        monday.setChecked(true);
+                        break;
+                    case 3:
+                        tuesday.setChecked(true);
+                        break;
+                    case 4:
+                        wednesday.setChecked(true);
+                        break;
+                    case 5:
+                        thursday.setChecked(true);
+                        break;
+                    case 6:
+                        friday.setChecked(true);
+                        break;
+                    case 7:
+                        saturday.setChecked(true);
+                        break;
+                }
+
+            }
+        }
     }
+
 
     /**
      * 设置标签
@@ -322,32 +366,34 @@ public class AlarmClockNewFragment extends Fragment implements
      * @param view view
      */
     private void initTag(View view) {
-        // 初始化闹钟实例的标签
-        mAlarmClock.setTag(getString(R.string.alarm_clock));
-
         // 标签描述控件
-        EditText tag = (EditText) view.findViewById(R.id.tag_edit_text);
-        tag.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                if (!s.toString().equals("")) {
-                    mAlarmClock.setTag(s.toString());
-                } else {
-                    mAlarmClock.setTag(getString(R.string.alarm_clock));
-                }
-            }
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
+        ViewGroup taglayout = (ViewGroup) view.findViewById(R.id.ll_tag);
+        taglayout.setOnClickListener(this);
+        mTxtTag = (TextView) view.findViewById(R.id.tag_edit_text);
+        mTxtTag.setText(mAlarmClock.getTag());
+//        mTxtTag.addTextChangedListener(new TextWatcher() {
+//
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before,
+//                                      int count) {
+//                if (!s.toString().equals("")) {
+//                    mAlarmClock.setTag(s.toString());
+//                } else {
+//                    mAlarmClock.setTag(getString(R.string.alarm_clock));
+//                }
+//            }
+//
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count,
+//                                          int after) {
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//            }
+//        });
     }
+
 
     /**
      * 设置铃声
@@ -355,23 +401,11 @@ public class AlarmClockNewFragment extends Fragment implements
      * @param view view
      */
     private void initRing(View view) {
-        // 取得铃声选择配置信息
-        SharedPreferences share = getActivity().getSharedPreferences(
-                DrugAlarmConstant.EXTRA_SHARE, Activity.MODE_PRIVATE);
-        String ringName = share.getString(DrugAlarmConstant.RING_NAME,
-                getString(R.string.default_ring));
-        String ringUrl = share.getString(DrugAlarmConstant.RING_URL,
-                DrugAlarmConstant.DEFAULT_RING_URL);
-
-        // 初始化闹钟实例的铃声名
-        mAlarmClock.setRingName(ringName);
-        // 初始化闹钟实例的铃声播放地址
-        mAlarmClock.setRingUrl(ringUrl);
         // 铃声控件
         ViewGroup ring = (ViewGroup) view.findViewById(R.id.ring_llyt);
-        mRingDescribe = (TextView) view.findViewById(R.id.ring_describe);
-        mRingDescribe.setText(ringName);
         ring.setOnClickListener(this);
+        mRingDescribe = (TextView) view.findViewById(R.id.ring_describe);
+        mRingDescribe.setText(mAlarmClock.getRingName());
     }
 
     /**
@@ -380,18 +414,6 @@ public class AlarmClockNewFragment extends Fragment implements
      * @param view view
      */
     private void initToggleButton(View view) {
-        // 初始化闹钟实例的振动，默认振动
-        mAlarmClock.setVibrate(1);
-
-        // 初始化闹钟实例的小睡信息
-        // 默认小睡
-        mAlarmClock.setNap(1);
-        // 小睡间隔10分钟
-        mAlarmClock.setNapInterval(10);
-        // 小睡3次
-        mAlarmClock.setNapTimes(3);
-
-
         // 振动
         ToggleButton vibrateBtn = (ToggleButton) view.findViewById(R.id.vibrate_btn);
 
@@ -400,11 +422,18 @@ public class AlarmClockNewFragment extends Fragment implements
         // 小睡组件
         ViewGroup nap = (ViewGroup) view.findViewById(R.id.nap_llyt);
         nap.setOnClickListener(this);
-
+        
 
         vibrateBtn.setOnCheckedChangeListener(this);
         napBtn.setOnCheckedChangeListener(this);
+
+        vibrateBtn.setChecked(mAlarmClock.isVibrate() == 1 );
+        napBtn.setChecked(mAlarmClock.isNap() == 1);
+
     }
+    
+    
+
 
     @Override
     public void onClick(View v) {
@@ -415,12 +444,80 @@ public class AlarmClockNewFragment extends Fragment implements
                 break;
             // 当点击确认按钮
             case R.id.action_accept:
-                saveDefaultAlarmTime();
+//                saveDefaultAlarmTime();
 
                 Intent data = new Intent();
                 data.putExtra(DrugAlarmConstant.ALARM_CLOCK, mAlarmClock);
                 getActivity().setResult(Activity.RESULT_OK, data);
+//                mPresenter.finishEidit(mAlarmClock);
+
                 drawAnimation();
+                break;
+            case R.id.ll_tag: //药品盒
+                final List<Medicine> medicines = CacheRepository.getInstance().getMedicineList();
+                if(mAlarmClock.getMedicineList() != null && mAlarmClock.getMedicineList().size() > 0){
+                    for (Medicine medicine : mAlarmClock.getMedicineList()) {
+                        if(!medicines.contains(medicine)){
+                            medicines.add(medicine);
+                        }
+                        Log.d(TAG, "mAlarm :"+medicine);
+                    }
+                }
+                final String[] items = new String[medicines.size()];
+                final boolean[] checks = new boolean[medicines.size()];
+                for (int i = 0; i < medicines.size(); i++) {
+                    Medicine medicine = medicines.get(i);
+                    String item = medicine.getName() + "\t" + medicine.getDosage();
+                    items[i] = item;
+                }
+                if(mAlarmClock.getMedicineList() != null && mAlarmClock.getMedicineList().size() > 0){
+                    for (Medicine medicine : mAlarmClock.getMedicineList()) {
+                        int i = medicines.indexOf(medicine);
+                        if(i >= 0){
+                            checks[i] = true;
+                            Log.d(TAG, i+"mAlarm checks:"+medicine);
+                        }
+                    }
+                }
+                final AlertDialog.Builder multiChoiceDialog = new AlertDialog.Builder(getContext());
+                multiChoiceDialog.setTitle("药品盒");
+
+                multiChoiceDialog.setMultiChoiceItems(items, checks, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        Log.d(TAG, items[which]+isChecked);
+                        checks[which] = isChecked;
+                    }
+                });
+
+                multiChoiceDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                multiChoiceDialog.setPositiveButton("确定",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                StringBuffer buffer = new StringBuffer();
+                                if(mAlarmClock.getMedicineList() == null){
+                                    mAlarmClock.setMedicineList(new ArrayList<Medicine>());
+                                }
+                                mAlarmClock.getMedicineList().clear();
+                                for (int i = 0; i < medicines.size(); i++){
+                                    if(checks[i]){
+                                        mAlarmClock.getMedicineList().add(medicines.get(i));
+                                        buffer.append(medicines.get(i).getName() + " x "+medicines.get(i).getDosage()+ " ");
+                                    }
+                                    Log.d(TAG, "Alarm clock "+mAlarmClock.getMedicineList().size());
+                                }
+                                mTxtTag.setText(buffer);
+                                mAlarmClock.setTag(buffer.toString());
+                            }
+                        });
+
+                multiChoiceDialog.show();
                 break;
             // 当点击铃声
             case R.id.ring_llyt:
@@ -429,7 +526,10 @@ public class AlarmClockNewFragment extends Fragment implements
                     return;
                 }
                 // 铃声选择界面
-                /*Intent i = new Intent(getActivity(), RingSelectActivity.class);
+/*                Intent i = new Intent(getActivity(), RingSelectActivity.class);
+                i.putExtra(DrugAlarmConstant.RING_NAME, mAlarmClock.getRingName());
+                i.putExtra(DrugAlarmConstant.RING_URL, mAlarmClock.getRingUrl());
+                i.putExtra(DrugAlarmConstant.RING_PAGER, mAlarmClock.getRingPager());
                 i.putExtra(DrugAlarmConstant.RING_REQUEST_TYPE, 0);
                 startActivityForResult(i, REQUEST_RING_SELECT);*/
                 break;
@@ -440,7 +540,7 @@ public class AlarmClockNewFragment extends Fragment implements
                     return;
                 }
                 // 小睡界面
-                /*Intent nap = new Intent(getActivity(), NapEditActivity.class);
+/*                Intent nap = new Intent(getActivity(), NapEditActivity.class);
                 nap.putExtra(DrugAlarmConstant.NAP_INTERVAL,
                         mAlarmClock.getNapInterval());
                 nap.putExtra(DrugAlarmConstant.NAP_TIMES, mAlarmClock.getNapTimes());
@@ -456,14 +556,6 @@ public class AlarmClockNewFragment extends Fragment implements
         editor.putInt(DrugAlarmConstant.DEFAULT_ALARM_HOUR, mAlarmClock.getHour());
         editor.putInt(DrugAlarmConstant.DEFAULT_ALARM_MINUTE, mAlarmClock.getMinute());
         editor.apply();
-    }
-
-    /**
-     * 结束新建闹钟界面时开启渐变缩小效果动画
-     */
-    private void drawAnimation() {
-        getActivity().finish();
-        getActivity().overridePendingTransition(0, R.anim.zoomout);
     }
 
     @Override
@@ -498,6 +590,15 @@ public class AlarmClockNewFragment extends Fragment implements
                 mAlarmClock.setNapTimes(napTimes);
                 break;
         }
+    }
+    
+
+    /**
+     * 结束新建闹钟界面时开启移动退出效果动画
+     */
+    private void drawAnimation() {
+        getActivity().finish();
+        getActivity().overridePendingTransition(0, R.anim.move_out_bottom);
     }
 
     @Override
@@ -618,9 +719,8 @@ public class AlarmClockNewFragment extends Fragment implements
                     mAlarmClock.setNap(0);
                 }
                 break;
-
+            
         }
-
     }
 
     /**
@@ -698,6 +798,7 @@ public class AlarmClockNewFragment extends Fragment implements
 
     }
 
+
     /**
      * 计算显示倒计时信息
      */
@@ -728,6 +829,8 @@ public class AlarmClockNewFragment extends Fragment implements
         // 剩余分钟
         long remainMinute = (ms - remainDay * dd - remainHour * hh) / mm;
 
+        // 响铃倒计时
+        String countDown;
         // 当剩余天数大于0时显示【X天X小时X分】格式
         if (remainDay > 0) {
             countDown = getString(R.string.countdown_day_hour_minute);
@@ -751,5 +854,35 @@ public class AlarmClockNewFragment extends Fragment implements
             }
 
         }
+    }
+
+    public static AlarmClockEditFragment newInstance() {
+        return new AlarmClockEditFragment();
+    }
+
+    @Override
+    public void showTip(final String text) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mToast.setText(text);
+                mToast.show();
+            }
+        });
+    }
+
+    @Override
+    public void setPresenter(AlarmClockContract.Presenter presenter) {
+            this.mPresenter = presenter;
+    }
+
+    @Override
+    public void showTitle(final String title) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mTxtTitle.setText(title);
+            }
+        });
     }
 }

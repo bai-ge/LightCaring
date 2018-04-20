@@ -5,12 +5,20 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.carefor.data.entity.AlarmClock;
+import com.carefor.data.entity.Medicine;
 import com.carefor.data.source.DataSource;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.AlarmClockTable.AlarmClockEntry;
+import com.carefor.util.JsonTools;
+import com.carefor.util.Tools;
 import com.google.common.base.Preconditions;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,10 +106,35 @@ public class LocalRepository implements DataSource {
 
 
 
+            List<Medicine> medicines = new ArrayList<>();
+            StringBuffer buffer = new StringBuffer();
+            if(!Tools.isEmpty(tag)){
+                try{
+                    Log.d(TAG, "tag="+tag);
+                    JSONArray jsonArray = new JSONArray(tag);
+                    for (int i = 0; i < jsonArray.length(); i++){
+                        JSONObject json =  jsonArray.getJSONObject(i);
+                        Medicine medicine = (Medicine) JsonTools.toJavaBean(Medicine.class, json);
+                        if(medicine != null){
+                            medicines.add(medicine);
+                            buffer.append(medicine.getName() + "x"+ medicine.getDosage()+"\n");
+                        }
+                    }
+                    if(!Tools.isEmpty(buffer.toString())){
+                        tag = buffer.toString();
+                    }
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+
             ac = new AlarmClock(id,hour, minute, repeat,
                     weeks, tag, ringName, ringUrl,
             ringPager, volume,  vibrate, nap,
             napInterval, napTimes, weaPrompt, onOff);
+            if(medicines != null && medicines.size() > 0){
+                ac.setMedicineList( medicines);
+            }
         }
         return ac;
     }
@@ -173,12 +206,22 @@ public class LocalRepository implements DataSource {
     private void putValue(ContentValues values, AlarmClock alarmClock) {
 
         if (values != null && alarmClock != null) {
+            String tag  = alarmClock.getTag();
+            if(alarmClock.getMedicineList() != null && alarmClock.getMedicineList().size() > 0){
+                JSONArray  jsonArray = new JSONArray();
+                for (Medicine medicine : alarmClock.getMedicineList()) {
+                    JSONObject json = JsonTools.getJSON(medicine);
+                    jsonArray.put(json);
+                }
+                tag = jsonArray.toString();
+                Log.d(TAG, tag);
+            }
             values.put(AlarmClockEntry._ID, alarmClock.getId());
             values.put(AlarmClockEntry.AC_HOUR, alarmClock.getHour());
             values.put(AlarmClockEntry.AC_MINUTE, alarmClock.getMinute());
             values.put(AlarmClockEntry.AC_REPEAT, alarmClock.getRepeat());
             values.put(AlarmClockEntry.AC_WEEKS, alarmClock.getWeeks());
-            values.put(AlarmClockEntry.AC_TAG, alarmClock.getTag());
+            values.put(AlarmClockEntry.AC_TAG, tag);
             values.put(AlarmClockEntry.AC_RING_NAME, alarmClock.getRingName());
             values.put(AlarmClockEntry.AC_RING_URL, alarmClock.getRingUrl());
             values.put(AlarmClockEntry.AC_RING_PAGER, alarmClock.getRingPager());
