@@ -46,6 +46,14 @@ public class CacheRepository {
 
     private int mServerUdpPort = 12059;
 
+    //铃声设置
+    private String ringUri;
+    private boolean phoneVibrate;
+
+    //报警设置
+    private String alertUri;
+    private boolean alertVibrate;
+
     //紧急联系人
     private User mSelectUser = null; //应至少保证id、name、tel 、device_id准确
     private int selectIndex;
@@ -73,8 +81,7 @@ public class CacheRepository {
     private boolean mIsLogin = false;
     private User mLoginUser = null;
 
-    //闹铃URI
-    private String mRingUri;
+
 
 
     private Map<String, DeviceModel> mCacheddevices;
@@ -192,7 +199,13 @@ public class CacheRepository {
             mLoginUser = new User(name, pas);
         }
         mLoginUser.setDeviceId(mDeviceId);
-        mRingUri = preferences.getString(AppConfigure.KEY_PHONE_RING, "");
+
+        ringUri = preferences.getString(AppConfigure.KEY_PHONE_RING, "");
+        phoneVibrate = preferences.getBoolean(AppConfigure.KEY_PHONE_VIBRATE, false);
+
+        alertUri = preferences.getString(AppConfigure.KEY_ALERT, "");
+        alertVibrate = preferences.getBoolean(AppConfigure.KEY_ALERT_VIBRATE, false);
+
         //定位
         mCurrentLat = preferences.getFloat(AppConfigure.KEY_CURRENT_LAT, 116.40399f);
         mCurrentLon = preferences.getFloat(AppConfigure.KEY_CURRENT_LON, 39.915087f);
@@ -229,6 +242,27 @@ public class CacheRepository {
         editor.commit();
         Log.d("save", "保存配置" + mLoginUser);
         Log.d("save", "紧急联系人" + mSelectUser);
+    }
+
+
+    public String getRingUri() {
+        return ringUri;
+    }
+
+    public boolean isPhoneVibrate() {
+        return phoneVibrate;
+    }
+
+    public String getAlertUri() {
+        return alertUri;
+    }
+
+    public boolean isAlertVibrate() {
+        return alertVibrate;
+    }
+
+    public void setAlertVibrate(boolean alertVibrate) {
+        this.alertVibrate = alertVibrate;
     }
 
     public String getServerIp() {
@@ -339,13 +373,6 @@ public class CacheRepository {
     public void setP2PPort(int mP2PPort) {
         this.mP2PPort = mP2PPort;
     }
-
-
-
-    public String getRingUri() {
-        return mRingUri;
-    }
-
 
 
     public Candidate add(Candidate candidate){

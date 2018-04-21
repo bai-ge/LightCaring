@@ -42,4 +42,10 @@
     <declare-styleable name="ProgressBall" tools:ignore="ResourceName">
         <attr name="dot_color" format="color|reference" />
     </declare-styleable>
+    <declare-styleable name="CircleProgressbar">
+        <attr name="out_line_color" format="color|reference"/>
+        <attr name="in_circle_color" format="color|reference" />
+        <attr name="progress_color" format="color|reference"/>
+        <attr name="progress_line_width" format="dimension|reference"/>
+    </declare-styleable>
 </resources>

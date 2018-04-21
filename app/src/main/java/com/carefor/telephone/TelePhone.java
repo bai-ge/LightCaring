@@ -8,6 +8,7 @@ import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Vibrator;
 import android.util.Log;
 
 import com.carefor.broadcast.SendMessageBroadcast;
@@ -69,6 +70,8 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
     private ByteBuffer voiceBuf;
 
     private static MediaPlayer mMediaPlayer;
+
+    private static Vibrator mVibrator;
 
     private Context mContext;
 
@@ -190,9 +193,22 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             e.printStackTrace();
         }
     }
+    /**
+     * 振动
+     */
+    public void vibrate() {
+        mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+        // 前一个代表等待多少毫秒启动vibrator，后一个代表vibrator持续多少毫秒停止。
+        // 从repeat索引开始的振动进行循环。-1表示只振动一次，非-1表示从pattern的指定下标开始重复振动。
+        mVibrator.vibrate(new long[]{1000, 1000}, 0);
+    }
+
     public void stopRing(){
         if(mMediaPlayer != null && mMediaPlayer.isPlaying()){
             mMediaPlayer.stop();
+        }
+        if(mVibrator != null && mVibrator.hasVibrator()){
+            mVibrator.cancel();
         }
     }
     public int getStatus() {
@@ -365,10 +381,14 @@ public class TelePhone implements SpeexTalkRecorder.OnRecorderListener, SpeexTal
             mTalkWith = deviceId;
             setStatus(Status.CALLED);
             String ringUri = CacheRepository.getInstance().getRingUri();
+            boolean bVibrate = CacheRepository.getInstance().isPhoneVibrate();
             if(!Tools.isEmpty(ringUri)){
                 ring(mContext, Uri.parse(ringUri));
             }else{
                 ring();
+            }
+            if(bVibrate){
+                vibrate();
             }
             checkUdpConnector();
             String msg = MessageManager.replyCallTo(deviceId);

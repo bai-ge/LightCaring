@@ -20,6 +20,7 @@ public class AppConfigure {
     public final static String KEY_SERVER_PORT = "key_phone_server_tcp_port";
     public final static String KEY_DEVICE_ID = "device_id";
 
+    /*设置*/
     public static final String KEY_PHONE_RING = "key_phone_ring";
     public static final String KEY_PHONE_VIBRATE = "key_phone_vibrate";
 
