@@ -10,6 +10,7 @@
 
     <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
     <string name="navigation_settings">设置</string>
+    <string name="navigation_personal_settings">个人设置</string>
     <string name="navigation_about">关于</string>
     <string name="navigation_home">主页</string>
     <string name="navigation_logout">注销</string>
@@ -40,6 +41,12 @@
         <item>女</item>
     </string-array>
 
+    <string-array name="server_ip">
+        <item>120.78.148.180</item>
+        <item>39.108.74.14</item>
+        <item>其它</item>
+    </string-array>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
@@ -51,6 +58,12 @@
     2.闹钟后台已被安全类软件误清理\n
     3.软件安装在SD卡\n
     4.关机</string>
+    
+    <string name="about_function">功能介绍：\n
+        &#160; &#160;&#160; &#160;本应用针对需要护理照料的人，比如老人，小孩，残疾人等，为他们提供方便快捷的服务，为他们的人生安全提供保障。\n
+        &#160; &#160;&#160; &#160;监护人可以方便的了解被监护人的位置状态，防止走失；可以远程设置被监护人的服药提醒功能以及注意事项；
+        被监护人可以通过应用，一键呼救，向监护人发送位置及语音信息等；
+        在考虑特殊人群的使用方便上，被监护人客户端可以不用进行任何操作，监护人的移动端就可以随时进行远程设置，定位等功能。\n</string>
     <string name="no_tip">不再提示</string>
     <string name="repeat">重复</string>
     <string name="repeat_once">只响一次</string>
@@ -61,7 +74,7 @@
     <string name="friday">周五</string>
     <string name="saturday">周六</string>
     <string name="sunday">周日</string>
-    <string name="tag">标签</string>
+    <string name="tag">药品</string>
     <string name="alarm_clock">闹钟</string>
     <string name="ring">铃声</string>
     <string name="default_ring">默认铃声</string>

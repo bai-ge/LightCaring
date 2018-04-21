@@ -52,36 +52,53 @@
             android:scrollbars="none">
         </android.support.v7.widget.RecyclerView>
 
-        <LinearLayout
-            android:id="@+id/alarm_clock_empty"
+        <RelativeLayout
+            android:id="@+id/layout_empty"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_height="match_parent">
 
-            <TextView
-                android:layout_width="0dp"
+            <LinearLayout
+                android:id="@+id/layout_center"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:text="按右上的"
-                android:textColor="@color/white_trans90"
-                android:textSize="18sp"/>
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="134dp">
 
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:text="按右上的"
+                    android:textColor="@color/white_trans90"
+                    android:textSize="18sp"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_action_new"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="left"
+                    android:text="添加药品"
+                    android:textColor="@color/white_trans90"
+                    android:textSize="18sp"/>
+            </LinearLayout>
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_new"/>
+                android:background="@drawable/ic_direction"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="35dp"/>
+        </RelativeLayout>
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="left"
-                android:text="添加药品"
-                android:textColor="@color/white_trans90"
-                android:textSize="18sp"/>
-        </LinearLayout>
     </FrameLayout>
 
 </LinearLayout>

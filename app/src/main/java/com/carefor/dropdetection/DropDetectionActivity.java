@@ -5,8 +5,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.carefor.BaseActivity;
 import com.carefor.callback.SeniorCallBack;
@@ -17,6 +17,7 @@ import com.carefor.data.source.local.LocalRepository;
 import com.carefor.data.source.remote.Parm;
 import com.carefor.mainui.R;
 import com.carefor.util.Tools;
+import com.carefor.view.ProgressBall;
 import com.suke.widget.SwitchButton;
 
 import org.json.JSONException;
@@ -28,20 +29,20 @@ public class DropDetectionActivity extends BaseActivity {
     private Toolbar mToolbar;
     private SwitchButton mSwitchButton;
 
-    private Toast mToast;
-
     private TextView mUserName;
 
     private Repository mRepository;
 
     private FallService mFallService;
 
+    private ProgressBar mProgressbar;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_drop_detection);
+        setContentView(R.layout.activity_drop);
 
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+
 
         mRepository = Repository.getInstance(LocalRepository.getInstance(getApplicationContext()));
 
@@ -57,22 +58,9 @@ public class DropDetectionActivity extends BaseActivity {
             @Override
             public void onFall() {
                 showTip("老人跌倒");
-                mSwitchButton.setChecked(false);
-                if(CacheRepository.getInstance().who().getType() == 2){
-                    mRepository.asynInformTumble(CacheRepository.getInstance().who().getUid(), new SeniorCallBack(){
-                        @Override
-                        public void success() {
-                            super.success();
-                            showTip("跌倒信息发送成功");
-                        }
-
-                        @Override
-                        public void fail() {
-                            super.fail();
-                            showTip("跌倒信息发送失败");
-                        }
-                    });
-                }
+//                mSwitchButton.setChecked(false);
+//                Intent intent = new Intent(DropDetectionActivity.this, DropSoundActivity.class);
+//                startActivity(intent);
             }
 
             @Override
@@ -104,6 +92,7 @@ public class DropDetectionActivity extends BaseActivity {
             }
         });
         mUserName = (TextView) findViewById(R.id.user_name);
+        mProgressbar = (ProgressBar) findViewById(R.id.progress);
         mSwitchButton = (SwitchButton) findViewById(R.id.switch_drop);
         mSwitchButton.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
             @Override
@@ -145,18 +134,13 @@ public class DropDetectionActivity extends BaseActivity {
         }
     }
 
-    private void showTip(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-                mToast.show();
-            }
-        });
-    }
+
 
     private void askDropSwitch(){
         //询问跌倒监测状态
+        mProgressbar.setVisibility(View.VISIBLE);
+        mSwitchButton.setEnabled(false);
+
         CacheRepository cacheRepository = CacheRepository.getInstance();
         User selUser = CacheRepository.getInstance().getSelectUser();
         JSONObject jsonObject = new JSONObject();
@@ -165,6 +149,9 @@ public class DropDetectionActivity extends BaseActivity {
             public void receiveMessage(String message) {
                 super.receiveMessage(message);
                 try {
+                    mSwitchButton.setEnabled(true);
+                    mProgressbar.setVisibility(View.INVISIBLE);
+
                     JSONObject jsonObj = new JSONObject(message);
                     if(jsonObj.has(Parm.DROP_SWITCH)){
                         boolean isStart = jsonObj.getBoolean(Parm.DROP_SWITCH);
@@ -174,6 +161,20 @@ public class DropDetectionActivity extends BaseActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void timeout() {
+                super.timeout();
+                mSwitchButton.setEnabled(true);
+                mProgressbar.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onFinish() {
+                super.onFinish();
+                mSwitchButton.setEnabled(true);
+                mProgressbar.setVisibility(View.INVISIBLE);
             }
         };
         seniorCallBack.setId(Tools.ramdom());
@@ -191,6 +192,9 @@ public class DropDetectionActivity extends BaseActivity {
     }
     private void ctrlDropSwitch(boolean isStart){
         //设置被监护人跌倒监测状态
+        mProgressbar.setVisibility(View.VISIBLE);
+        mSwitchButton.setEnabled(false);
+
         CacheRepository cacheRepository = CacheRepository.getInstance();
         User selUser = CacheRepository.getInstance().getSelectUser();
         JSONObject jsonObject = new JSONObject();
@@ -199,6 +203,8 @@ public class DropDetectionActivity extends BaseActivity {
             public void receiveMessage(String message) {
                 super.receiveMessage(message);
                 try {
+                    mProgressbar.setVisibility(View.INVISIBLE);
+                    mSwitchButton.setEnabled(true);
                     JSONObject jsonObj = new JSONObject(message);
                     if(jsonObj.has(Parm.DROP_SWITCH)){
                         boolean isStart = jsonObj.getBoolean(Parm.DROP_SWITCH);
@@ -208,6 +214,20 @@ public class DropDetectionActivity extends BaseActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void timeout() {
+                super.timeout();
+                mProgressbar.setVisibility(View.INVISIBLE);
+                mSwitchButton.setEnabled(true);
+            }
+
+            @Override
+            public void onFinish() {
+                super.onFinish();
+                mProgressbar.setVisibility(View.INVISIBLE);
+                mSwitchButton.setEnabled(true);
             }
         };
         seniorCallBack.setId(Tools.ramdom());

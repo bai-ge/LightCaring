@@ -1,0 +1,11 @@
+
+LightCaringApp
+
+1.0.8 	1.修改保活机制，使用DaemonService打开单独的进程；
+		2.修改网络传输方式，使用SocketPacket打包所有传输的数据，可同时发送字节和字符数据，方便语音通信；
+		3.修改通信方式，TCP在DaemonService进程中建立连接，
+		  通过SendMessageBroadcast发送广播，再由服务发送TCP信息；
+
+1.0.9	1.优化界面
+		2.删除多余的类，比如MemberInfo, AddMemberActivity，AddMemberAdapter，MemberAdapter
+		3.将CacheRepository 部分数据分离，通话相关数据放到Telepone中

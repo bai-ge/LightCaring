@@ -10,16 +10,17 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.carefor.data.entity.Housekeeping;
 import com.carefor.data.entity.User;
 import com.carefor.dropdetection.DropDetectionActivity;
 import com.carefor.drugalarm.DrugAlarmActivity;
 import com.carefor.housekeeping.HousekeepingActivity;
 import com.carefor.location.LocationActivity;
+import com.carefor.more.MoreActivity;
 import com.carefor.telephone.PhoneActivity;
 import com.carefor.util.Loggerx;
 import com.carefor.view.ItemCardView;
@@ -41,6 +42,10 @@ public class MainFragment extends Fragment implements MainContract.View {
     private Toast mToast;
 
     private TextView mEmName;
+
+    private ImageButton mBtnLeft;
+
+    private ImageButton mBtnRight;
 
     private LinearLayout mInformLayout;
 
@@ -78,6 +83,22 @@ public class MainFragment extends Fragment implements MainContract.View {
         mInformLayout = (LinearLayout) root.findViewById(R.id.inform_layout);
         mInformText = (TextView) root.findViewById(R.id.inform_text);
         mEmName = (TextView) root.findViewById(R.id.em_name);
+        mBtnLeft = (ImageButton) root.findViewById(R.id.btn_left);
+        mBtnRight = (ImageButton) root.findViewById(R.id.btn_right);
+
+        mBtnLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPresenter.preUser();
+            }
+        });
+
+        mBtnRight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPresenter.nextUser();
+            }
+        });
         root.findViewById(R.id.btn_phone).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -122,6 +143,7 @@ public class MainFragment extends Fragment implements MainContract.View {
             public void onClick(View v) {
                 showTip(((ItemCardView)v).getText().toString());
                 Loggerx.d(TAG, ((ItemCardView)v).getText().toString());
+                mPresenter.skipToActivity(MoreActivity.class);
             }
         });
 
@@ -173,6 +195,12 @@ public class MainFragment extends Fragment implements MainContract.View {
 
             }
         });
+    }
+
+    @Override
+    public void setEnableArrow(boolean isEnable) {
+        mBtnLeft.setEnabled(isEnable);
+        mBtnRight.setEnabled(isEnable);
     }
 
     private Runnable mHideInformRunnable = new Runnable() {

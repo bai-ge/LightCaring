@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.afollestad.materialdialogs.AlertDialogWrapper;
 import com.carefor.data.entity.AlarmClock;
@@ -28,6 +30,7 @@ import com.carefor.data.entity.DrugAlarmConstant;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.drugalarm.Event.AlarmClockDeleteEvent;
 import com.carefor.drugalarm.Event.AlarmClockUpdateEvent;
+import com.carefor.drugalarm.alarm.AlarmClockEditActivity;
 import com.carefor.mainui.R;
 import com.carefor.util.AlarmUtil;
 import com.carefor.util.OttoAppConfig;
@@ -45,6 +48,7 @@ import jp.wasabeef.recyclerview.animators.ScaleInLeftAnimator;
  */
 public class DrugAlarmFragment extends Fragment implements OnClickListener {
 
+    private final static String TAG = DrugAlarmFragment.class.getCanonicalName();
     /**
      * 新建闹钟的requestCode
      */
@@ -83,7 +87,7 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
     /**
      * List内容为空时的视图
      */
-    private LinearLayout mEmptyView;
+    private RelativeLayout mEmptyView;
 
 
 
@@ -105,8 +109,8 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_drugalarm, container, false);
 
-        mEmptyView = (LinearLayout) view
-                .findViewById(R.id.alarm_clock_empty);
+        mEmptyView = (RelativeLayout) view
+                .findViewById(R.id.layout_empty);
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.list_view);
         mRecyclerView.setHasFixedSize(true);
@@ -155,6 +159,8 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
             AlarmClock alarmClock = mAlarmClockList.get(position);
             Intent intent = new Intent(getActivity(), AlarmClockEditActivity.class);
             intent.putExtra(DrugAlarmConstant.ALARM_CLOCK, alarmClock);
+            intent.putExtra(DrugAlarmConstant.IS_NEW_ALARM_CLOCK, false);
+//            startActivity(intent);
             // 开启编辑闹钟界面
             startActivityForResult(intent, REQUEST_ALARM_CLOCK_EDIT);
             // 启动移动进入效果动画
@@ -165,6 +171,11 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
         public void onItemLongClick(View view, int position) {
             // 显示删除，完成按钮，隐藏修改按钮
             displayDeleteAccept();
+        }
+
+        @Override
+        public void onItemDelete(Object obj) {
+
         }
     }
 
@@ -178,7 +189,9 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
                 }
 
                Intent intent = new Intent(getActivity(),
-                    AlarmClockNewActivity.class);
+                    AlarmClockEditActivity.class);
+                intent.putExtra(DrugAlarmConstant.IS_NEW_ALARM_CLOCK, true);
+//                startActivity(intent);
                 // 开启新建闹钟界面
                 startActivityForResult(intent, REQUEST_ALARM_CLOCK_NEW);
                 // 启动渐变放大效果动画
@@ -267,6 +280,7 @@ public class DrugAlarmFragment extends Fragment implements OnClickListener {
         }
         AlarmClock ac = data
                 .getParcelableExtra(DrugAlarmConstant.ALARM_CLOCK);
+        Log.d(TAG, "medicine size ="+ac.getMedicineList().size());
         switch (requestCode) {
             // 新建闹钟
             case REQUEST_ALARM_CLOCK_NEW:

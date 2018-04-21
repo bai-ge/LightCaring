@@ -81,10 +81,11 @@ public class LoginPresenter implements LoginContract.Presenter {
                         user.setUid(list.get(0).getUid());
                         user.setType(list.get(0).getType());
                         user.setTel(list.get(0).getTel());
-                        cacheRepository.setYouself(user);
-                        Log.d(TAG, "用户同步信息"+user);
+                        cacheRepository.login(user, mRepository);
                     }
                 });
+
+
             }
 
             @Override

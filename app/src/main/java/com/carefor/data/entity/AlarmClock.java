@@ -19,7 +19,13 @@ package com.carefor.data.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+import java.util.List;
 
+
+/**
+ *
+ */
 public class AlarmClock implements Parcelable {
 
     /**
@@ -51,6 +57,11 @@ public class AlarmClock implements Parcelable {
      * 标签
      */
     private String tag;
+
+    /*
+    * 药品列表
+    * */
+    private List<Medicine> medicineList;
 
     /**
      * 铃声名
@@ -156,6 +167,7 @@ public class AlarmClock implements Parcelable {
         out.writeString(repeat);
         out.writeString(weeks);
         out.writeString(tag);
+        out.writeList(medicineList);
         out.writeString(ringName);
         out.writeString(ringUrl);
         out.writeInt(ringPager);
@@ -180,6 +192,7 @@ public class AlarmClock implements Parcelable {
         repeat = in.readString();
         weeks = in.readString();
         tag = in.readString();
+        in.readList(getMedicineList(), Medicine.class.getClassLoader());
         ringName = in.readString();
         ringUrl = in.readString();
         ringPager = in.readInt();
@@ -269,6 +282,17 @@ public class AlarmClock implements Parcelable {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public List<Medicine> getMedicineList() {
+        if(medicineList == null){
+            medicineList = new ArrayList<>();
+        }
+        return medicineList;
+    }
+
+    public void setMedicineList(List<Medicine> medicineList) {
+        this.medicineList = medicineList;
     }
 
     public String getRingName() {

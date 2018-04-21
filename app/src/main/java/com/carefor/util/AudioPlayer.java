@@ -1,7 +1,9 @@
 package com.carefor.util;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Vibrator;
 
 import com.carefor.mainui.R;
@@ -13,6 +15,20 @@ import java.io.IOException;
  */
 
 public class AudioPlayer {
+
+    /** The audio stream for phone calls */
+    public static final int STREAM_VOICE_CALL = AudioManager.STREAM_VOICE_CALL;
+    /** The audio stream for system sounds */
+    public static final int STREAM_SYSTEM = AudioManager.STREAM_SYSTEM;
+    /** The audio stream for the phone ring */
+    public static final int STREAM_RING = AudioManager.STREAM_RING;
+    /** The audio stream for music playback */
+    public static final int STREAM_MUSIC = AudioManager.STREAM_MUSIC;
+    /** The audio stream for alarms */
+    public static final int STREAM_ALARM = AudioManager.STREAM_ALARM;
+
+
+
 
     /**
      * 音频播放
@@ -76,7 +92,120 @@ public class AudioPlayer {
         }
 
     }
+    public void play(int type, String uri, final boolean looping, final boolean vibrate){
+        stop();
+        // 当设为振动时
+        if (vibrate) {
+            vibrate();
+        }
 
+        mPlayer = new MediaPlayer();
+        mPlayer.setAudioStreamType(type);
+
+        try {
+            // 设置数据源
+            mPlayer.setDataSource(uri);
+            // 异步准备，不会阻碍主线程
+            mPlayer.prepareAsync();
+        } catch (IllegalArgumentException | SecurityException
+                | IllegalStateException | IOException e) {
+            ToastUtil.showShortToast(mContext,
+                    mContext.getString(R.string.play_fail));
+        }
+
+        // 当准备好时
+        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (looping) {
+                    mPlayer.setLooping(true);
+                    mPlayer.start();
+                } else {
+                    mPlayer.start();
+                }
+            }
+        });
+        // 当播放完成时
+        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if (!mPlayer.isLooping()) {
+                    stopPlay();
+                }
+
+            }
+        });
+        // 当播放出现错误时
+        mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                ToastUtil.showShortToast(mContext,
+                        mContext.getString(R.string.play_fail));
+                return false;
+            }
+
+        });
+    }
+    public void play(int type, Uri uri, final boolean looping, final boolean vibrate){
+        stop();
+        // 当设为振动时
+        if (vibrate) {
+            vibrate();
+        }
+
+        mPlayer = new MediaPlayer();
+        mPlayer.setAudioStreamType(type);
+
+        try {
+            // 设置数据源
+            mPlayer.setDataSource(mContext, uri);
+            // 异步准备，不会阻碍主线程
+            mPlayer.prepareAsync();
+        } catch (IllegalArgumentException | SecurityException
+                | IllegalStateException | IOException e) {
+            ToastUtil.showShortToast(mContext,
+                    mContext.getString(R.string.play_fail));
+        }
+
+        // 当准备好时
+        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (looping) {
+                    mPlayer.setLooping(true);
+                    mPlayer.start();
+                } else {
+                    mPlayer.start();
+                }
+            }
+        });
+        // 当播放完成时
+        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if (!mPlayer.isLooping()) {
+                    stopPlay();
+                }
+
+            }
+        });
+        // 当播放出现错误时
+        mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                ToastUtil.showShortToast(mContext,
+                        mContext.getString(R.string.play_fail));
+                return false;
+            }
+
+        });
+    }
     /**
      * 开始播放
      *
@@ -156,6 +285,63 @@ public class AudioPlayer {
 
         // 设置音频资源文件
         mPlayer = MediaPlayer.create(mContext, resId);
+        if (looping) {
+            mPlayer.setLooping(true);
+            mPlayer.start();
+        } else {
+            mPlayer.start();
+        }
+        // 当播放录音停止音时
+        if (resId == R.raw.record_stop) {
+            sIsRecordStopMusic = true;
+        }
+        // 当播放完成时
+        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if (!mPlayer.isLooping()) {
+                    stopPlay();
+                }
+
+                // 当播放录音停止音时
+                if (resId == R.raw.record_stop) {
+                    sIsRecordStopMusic = false;
+                }
+
+            }
+        });
+        // 当播放出现错误时
+        mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                ToastUtil.showShortToast(mContext,
+                        mContext.getString(R.string.play_fail));
+                return false;
+            }
+
+        });
+    }
+
+    /**
+     * 开始播放
+     *
+     * @param resId   音频资源文件ID
+     * @param looping 是否循环播放
+     * @param vibrate 是否振动
+     */
+    public void playRaw(int type, final int resId, boolean looping, boolean vibrate) {
+        stop();
+        // 当设为振动时
+        if (vibrate) {
+            vibrate();
+        }
+
+        // 设置音频资源文件
+        mPlayer = MediaPlayer.create(mContext, resId);
+        mPlayer.setAudioStreamType(type);
+
         if (looping) {
             mPlayer.setLooping(true);
             mPlayer.start();

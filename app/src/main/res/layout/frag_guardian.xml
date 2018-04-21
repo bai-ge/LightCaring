@@ -8,7 +8,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_weight="1.4">
+        android:layout_weight="1">
 
         <!--通知栏-->
         <LinearLayout
@@ -16,6 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/yellow">
+
             <TextView
                 android:id="@+id/inform_text"
                 android:layout_width="wrap_content"
@@ -27,26 +28,57 @@
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_centerInParent="true"
             android:layout_height="200dip"
-            android:orientation="vertical"
+            android:layout_centerInParent="true"
             android:gravity="center">
 
-            <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginBottom="16dp"
-                android:src="@mipmap/profile_image"/>
-
-            <TextView
-                android:id="@+id/em_name"
-                android:layout_marginTop="10dp"
-                android:textSize="18sp"
-                android:layout_width="match_parent"
+            <!--Button 无法应用src属性来改变状态-->
+            <ImageButton
+                android:id="@+id/btn_left"
+                android:layout_width="35dp"
                 android:layout_height="wrap_content"
-                android:text="@string/app_name"
-                android:gravity="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
+                android:layout_gravity="center"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/selector_normal_bg"
+                android:background="@drawable/left_arrow"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/head"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_marginBottom="16dp"
+                    android:src="@mipmap/profile_image"/>
+
+                <TextView
+                    android:id="@+id/em_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="@string/app_name"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"/>
+
+            </LinearLayout>
+
+            <!--Button 无法应用src属性来改变状态-->
+            <ImageButton
+                android:id="@+id/btn_right"
+                android:layout_width="35dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/selector_normal_bg"
+                android:background="@drawable/right_arrow"/>
+
         </LinearLayout>
 
     </RelativeLayout>
@@ -77,11 +109,12 @@
 
                     <com.carefor.view.ItemCardView
                         android:id="@+id/btn_phone"
-                        android:layout_centerInParent="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         card:card_name="@string/Voice_Communication"
-                        card:card_image="@drawable/ic_voice_communication" />
+                        card:card_image="@drawable/ic_voice_communication"
+                        android:layout_centerVertical="true"
+                        android:layout_centerHorizontal="true"/>
 
                 </RelativeLayout>
 
@@ -185,9 +218,10 @@
                         android:id="@+id/btn_sos"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
                         card:card_image="@drawable/ic_sos"
-                        card:card_name="@string/More"/>
+                        card:card_name="@string/More"
+                        android:layout_centerVertical="true"
+                        android:layout_centerHorizontal="true"/>
 
                 </RelativeLayout>
 

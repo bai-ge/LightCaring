@@ -2,6 +2,7 @@ package com.carefor.callback;
 
 import android.util.Log;
 
+import com.carefor.data.entity.Candidate;
 import com.carefor.data.entity.Housekeeping;
 import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
@@ -26,7 +27,7 @@ public class SeniorCallBack extends BaseCallBack {
     /*初级接口部分*/
     @Override
     public void timeout() {
-        stopTimer();
+
     }
 
     /**
@@ -34,7 +35,7 @@ public class SeniorCallBack extends BaseCallBack {
      */
     @Override
     public final void response(String json) {
-        stopTimer();
+
         /*
         * TODO 通用解析器
         * 需要根据服务器返回的json 数据，调用本身不同的函数，解决持续通信问题
@@ -46,13 +47,17 @@ public class SeniorCallBack extends BaseCallBack {
 
     @Override
     public void error(Exception e) {
-        stopTimer();
+
     }
 
+    @Override
+    public void onFinish() {
+
+    }
 
     /*
-    返回码接口部分
-    */
+        返回码接口部分
+        */
     @Override
     public void success() {
         Log.d(TAG, "调用错了");
@@ -135,6 +140,11 @@ public class SeniorCallBack extends BaseCallBack {
 
     @Override
     public void receiveMessage(String message) {
+
+    }
+
+    @Override
+    public void loadCandidate(Candidate candidate) {
 
     }
 }

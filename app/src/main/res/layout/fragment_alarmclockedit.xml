@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:id="@+id/new_alarm_clock"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/new_alarm_clock"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -65,7 +65,8 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_marginBottom="2dp"
-                        android:layout_marginTop="2dp"/>
+                        android:layout_marginTop="2dp"
+                        android:timePickerMode="spinner"/>
                 </LinearLayout>
 
                 <View style="@style/divider_line_blank"/>
@@ -178,32 +179,37 @@
 
                 <LinearLayout style="@style/new_alarm_clcok_item_llyt">
 
-                    <LinearLayout style="@style/new_alarm_clcok_item">
+                    <LinearLayout
+                        android:id="@+id/ll_tag"
+                        style="@style/new_alarm_clcok_item"
+                        android:layout_marginLeft="13dp"
+                        android:layout_marginRight="13dp"
+                        android:background="@drawable/bg_record_operate_item">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:layout_marginLeft="19dp"
+                            android:layout_marginLeft="6dp"
+                            android:layout_weight="1"
                             android:text="@string/tag"
                             android:textColor="@color/black_text_normal_common"
                             android:textSize="16sp"/>
 
-                        <EditText
+                        <TextView
                             android:id="@+id/tag_edit_text"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginRight="19dp"
-                            android:layout_weight="1"
-                            android:background="@null"
-                            android:gravity="right"
-                            android:inputType="text"
-                            android:selectAllOnFocus="true"
-                            android:singleLine="true"
-                            android:text="@string/alarm_clock"
-                            android:textColor="@color/darkgray"
+                            android:layout_marginRight="6dp"
+                            android:drawablePadding="5dp"
+                            android:drawableRight="@drawable/ic_more_arrow_dark"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:maxLength="30"
+                            android:maxLines="1"
+                            android:maxWidth="230dp"
+                            android:text="阿莫西林 x 一粒"
                             android:textSize="16sp"/>
                     </LinearLayout>
 
@@ -291,7 +297,7 @@
 
                     <View style="@style/divider_line"/>
 
-                    
+
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>

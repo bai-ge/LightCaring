@@ -1,6 +1,7 @@
 package com.carefor.dropdetection;
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -65,6 +66,8 @@ public class FallService implements SensorEventListener{
         mSensorManager = (SensorManager) context.getSystemService(SENSOR_SERVICE);
         //获取accelerometer加速度传感器
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
     }
 
     public static FallService getInstance(@NonNull Context context) {
@@ -82,9 +85,16 @@ public class FallService implements SensorEventListener{
         return isRunning;
     }
 
+    public void setRunning(boolean running) {
+        if(isRunning != running){
+            isRunning = running;
+            mListener.onRunningChange(running);
+        }
+    }
+
     /*
-       设置阈值
-        */
+           设置阈值
+            */
     public void setThresholdValue(float highThreshold, float lowThreshold){
         this.mHighThresholdValue = highThreshold;
         this.mLowThresholdValue = lowThreshold;
@@ -92,13 +102,11 @@ public class FallService implements SensorEventListener{
     }
 
     public void start(){
-        isRunning = true;
+        setRunning(true);
         reset();
-        mListener.onRunningChange(isRunning);
     }
     public void stop(){
-        isRunning = false;
-        mListener.onRunningChange(isRunning);
+        setRunning(false);
     }
     public void reset(){
         svmCount = 0;
@@ -126,7 +134,7 @@ public class FallService implements SensorEventListener{
             }
         }
         if(isFell(svmCount)){
-            isRunning = false;
+            setRunning(false);
             mListener.onFall();
         }
         svmCount = (svmCount + 1) % svmData.length;
@@ -166,10 +174,10 @@ public class FallService implements SensorEventListener{
         if(mSensorManager != null && !Tools.isEmpty(key)){
             synchronized (mListenerMap) {
                 mListenerMap.put(key, listener);
-                if (mListenerMap.size() == 1) {
-                    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
-                    Log.d(TAG, "FallSensorManager.registerSensor()");
-                }
+//                if (mListenerMap.size() == 1) {
+//                    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
+//                    Log.d(TAG, "FallSensorManager.registerSensor()");
+//                }
             }
         }
     }
@@ -177,10 +185,10 @@ public class FallService implements SensorEventListener{
         if(mSensorManager != null){
             synchronized (mListenerMap){
                 mListenerMap.remove(key);
-                if(mListenerMap.size() == 0){
-                    mSensorManager.unregisterListener(this);
-                    Log.d(TAG, "FallSensorManager.unregisterSensor");
-                }
+//                if(mListenerMap.size() == 0){
+//                    mSensorManager.unregisterListener(this);
+//                    Log.d(TAG, "FallSensorManager.unregisterSensor");
+//                }
             }
 
         }
@@ -226,6 +234,10 @@ public class FallService implements SensorEventListener{
                 if (listener != null) {
                     listener.onFall();
                 }
+            }
+            if(mContext != null){
+                Intent intent = new Intent(mContext, DropSoundActivity.class);
+                mContext.startActivity(intent);
             }
         }
 

@@ -433,8 +433,7 @@ public class AlarmSoundFragment extends Fragment implements OnClickListener {
                     mAlarmClock.getVolume(), AudioManager.ADJUST_SAME);
 
             // 默认铃声
-            if (mAlarmClock.getRingUrl().equals(DrugAlarmConstant.DEFAULT_RING_URL)
-                    || TextUtils.isEmpty(mAlarmClock.getRingUrl())) {
+            if (Tools.isEmpty(mAlarmClock.getRingUrl()) || mAlarmClock.getRingUrl().equals(DrugAlarmConstant.DEFAULT_RING_URL)) {
                 // 振动模式
                 if (mAlarmClock.isVibrate() == 1) {
                     // 播放

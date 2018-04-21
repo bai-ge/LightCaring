@@ -1,6 +1,9 @@
 package com.carefor.location;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -30,6 +33,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * 
  * @author baidu
@@ -51,6 +56,12 @@ public class LocationService {
     private BDLocation mRecentLocation;
     private long mRefreshTime;
 
+    private  Context mContext;
+
+
+
+
+
     private LinkedList<LocationEntity> mLocationList = new LinkedList<LocationEntity>(); // 存放历史定位结果的链表，最大存放当前结果的前5次定位结果
 
     public static float[] EARTH_WEIGHT = {0.1f,0.2f,0.4f,0.6f,0.8f}; // 推算计算权重_地球
@@ -63,12 +74,15 @@ public class LocationService {
         mListenersMap = Collections.synchronizedMap(new LinkedHashMap<String, BDLocationListener>());
 		synchronized (objLock) {
 			if(client == null){
+                mContext = checkNotNull(locationContext);
 				client = new LocationClient(locationContext);
                 client.registerLocationListener(mListener);
 				client.setLocOption(getDefaultLocationClientOption());
 			}
 		}
 	}
+
+
 
     public static LocationService getInstance(@NonNull Context context) {
         if (INSTANCE == null) {
@@ -109,6 +123,8 @@ public class LocationService {
                         json.put(Parm.LAT, mRecentLocation.getLatitude());
                         json.put(Parm.LOCATION, mRecentLocation.getAddrStr());//大致位置
                         json.put(Parm.TITLE, mRecentLocation.getLocationDescribe());//详细位置
+                        json.put(Parm.ACCURACY, mRecentLocation.getRadius());
+                        json.put(Parm.BATTERY_PERCENT, CacheRepository.getInstance().getBatteryPercent());
                         json.put(Parm.TIME, String.valueOf(mRefreshTime));
                         loc = json.toString();
                     } catch (JSONException e) {
@@ -173,7 +189,7 @@ public class LocationService {
 			mOption.setLocationMode(LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
 			mOption.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系，如果配合百度地图使用，建议设置为bd09ll;
 			mOption.setScanSpan(3000);//可选，默认0，即仅定位一次，设置发起连续定位请求的间隔需要大于等于1000ms才是有效的
-		    mOption.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
+            mOption.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
 		    mOption.setIsNeedLocationDescribe(true);//可选，设置是否需要地址描述
 		    mOption.setNeedDeviceDirect(false);//可选，设置是否需要设备方向结果
 		    mOption.setLocationNotify(false);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
@@ -182,7 +198,8 @@ public class LocationService {
 		    mOption.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
 		    mOption.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
 			mOption.setOpenGps(true);//可选，默认false，设置是否开启Gps定位
-		    mOption.setIsNeedAltitude(false);//可选，默认false，设置定位时是否需要海拔信息，默认不需要，除基础定位版本都可用
+            mOption.setPriority(LocationClientOption.GpsFirst); // 设置GPS优先
+            mOption.setIsNeedAltitude(false);//可选，默认false，设置定位时是否需要海拔信息，默认不需要，除基础定位版本都可用
 		 
 		}
 		return mOption;

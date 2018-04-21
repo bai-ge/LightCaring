@@ -14,7 +14,6 @@ import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 import com.carefor.data.source.local.LocalRepository;
 import com.carefor.data.source.remote.Parm;
-import com.carefor.data.source.remote.ServerHelper;
 import com.carefor.dropdetection.FallService;
 import com.carefor.location.LocationService;
 
@@ -29,13 +28,14 @@ public class JPushMessageProcess {
 
     private final static String TAG = JPushMessageProcess.class.getCanonicalName();
 
-    public static void processAskLocation(Context context, final JSONObject json, long sendTime) {
+    public static void processAskLocation(final Context context, final JSONObject json, long sendTime) {
         final CacheRepository cacheRepository = CacheRepository.getInstance();
         final Repository repository = Repository.getInstance(LocalRepository.getInstance(context));
         final LocationService locationService = LocationService.getInstance(context);
         try {
             //返回收到确认
             final int receiveUid = json.getInt(Parm.ROUTER);
+
             String callback = new String();
             if (json.has(Parm.Callback)) {
                 callback = json.getString(Parm.Callback);
@@ -56,6 +56,17 @@ public class JPushMessageProcess {
                     double lng = bdLocation.getLongitude();
                     String title = bdLocation.getLocationDescribe();
 
+                    boolean isShowNotification = false;
+                    try{
+                        if(json.has(Parm.SHOW_NOTIFICATION)){
+                            isShowNotification = json.getBoolean(Parm.SHOW_NOTIFICATION);
+                        }
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+
+
+
                     JSONObject jsonContent = new JSONObject();
                     try {
                         jsonContent.put(Parm.MESSAGE_TYPE, String.valueOf(Parm.MSG_TYPE_LOCATION));
@@ -63,6 +74,12 @@ public class JPushMessageProcess {
                         jsonContent.put(Parm.JWD, lng + "," + lat);
                         jsonContent.put(Parm.TITLE, title);
                         jsonContent.put(Parm.TIME, String.valueOf(System.currentTimeMillis()));
+                        jsonContent.put(Parm.NAME, CacheRepository.getInstance().who().getName());
+                        jsonContent.put(Parm.ACCURACY, String.valueOf(bdLocation.getRadius()));
+                        jsonContent.put(Parm.BATTERY_PERCENT, String.valueOf(CacheRepository.getInstance().getBatteryPercent()));
+                        Log.d("battery", CacheRepository.getInstance().getBatteryPercent()+"");
+                        jsonContent.put(Parm.FROM, String.valueOf(cacheRepository.who().getUid()));
+                        jsonContent.put(Parm.TO, String.valueOf(receiveUid));
                         if (json.has(Parm.Callback)) {
                             jsonContent.put(Parm.Callback, json.get(Parm.Callback));
                         }
@@ -86,7 +103,12 @@ public class JPushMessageProcess {
                                 Log.d(TAG, "unknown()");
                             }
                         };
-                        repository.asynReplyLocation(0, "我要告诉监护人，我的位置在哪", cacheRepository.who().getUid(), receiveUid, jsonContent.toString(), seniorCallBack);
+
+                        if(isShowNotification){
+                            repository.asynReplyLocation(0, "我要告诉监护人，我的位置在哪", cacheRepository.who().getUid(), receiveUid, jsonContent.toString(), seniorCallBack);
+                        }else{
+                            repository.asynSendMessageTo(CacheRepository.getInstance().who().getUid(), receiveUid, jsonContent.toString(), seniorCallBack);
+                        }
 
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -112,18 +134,25 @@ public class JPushMessageProcess {
                     double lng = Double.valueOf(list[0]);
                     double lat = Double.valueOf(list[1]);
 
-                    StringBuffer des = new StringBuffer();
+                    Location location = new Location();
 
                     if (json.has(Parm.LOCATION)) {
-                        des.append(json.get(Parm.LOCATION) + "\n");
+                        location.setArea(json.getString(Parm.LOCATION));
                     }
                     if (json.has(Parm.TITLE)) {
-                        des.append(json.get(Parm.TITLE));
+                        location.setDescription(json.getString(Parm.TITLE));
                     }
-                    Location location = new Location();
+                    if(json.has(Parm.ACCURACY)){
+                        location.setAccuracy((float) json.getDouble(Parm.ACCURACY));
+                    }
+                    if(json.has(Parm.BATTERY_PERCENT)){
+                        location.setBatteryPercent((float) json.getDouble(Parm.BATTERY_PERCENT));
+                    }
+                    if(json.has(Parm.NAME)){
+                        location.setName(json.getString(Parm.NAME));
+                    }
                     location.setTime(sendTime);
                     location.setLatLng(new LatLng(lat, lng));
-                    location.setDescription(des.toString());
                     baseCallBack.loadLocation(location);
                 }
 

@@ -1,6 +1,7 @@
 package com.carefor.data.source.remote;
 
 import com.carefor.callback.BaseCallBack;
+import com.carefor.data.entity.Candidate;
 import com.carefor.data.entity.Housekeeping;
 import com.carefor.data.entity.Location;
 import com.carefor.data.entity.User;
@@ -14,15 +15,19 @@ import java.util.List;
 
 public interface ServerHelper {
 
-   /*基本接口部分*/
-    interface PrimaryCallBack{
+    /*基本接口部分*/
+    interface PrimaryCallBack {
         void timeout(); //连不上网，或迟迟得不到响应
+
         void response(String json);
+
         void error(Exception e); //运行出错
+
+        void onFinish();
     }
 
     /*根据json解析后，调用的返回码接口*/
-    interface CodeCallBack{
+    interface CodeCallBack {
 
         void success();
 
@@ -44,7 +49,7 @@ public interface ServerHelper {
     }
 
     /*复杂的接口部分*/
-    interface ComplexCallBack{
+    interface ComplexCallBack {
 
         void meaning(String text); //返回的中文解释
 
@@ -53,7 +58,6 @@ public interface ServerHelper {
         void loadUsers(List<User> list);
 
         void loadAUser(User user);
-
 
 
         void loadLocation(Location loc);
@@ -66,18 +70,26 @@ public interface ServerHelper {
 
         void receiveMessage(String message);
 
+        void loadCandidate(Candidate candidate);
+
     }
 
     void login(User user, BaseCallBack callBack);
+
     void loginMD5(User user, BaseCallBack callBack);
 
     void register(User user, String code, BaseCallBack callBack);
+
     void verification(String tel, BaseCallBack callBack);//获取验证码
 
     void query(int id, BaseCallBack callBack);
+
     void queryByTel(String tel, BaseCallBack callBack);
+
     void queryByName(String tel, BaseCallBack callBack);
+
     void queryByUser(User user, BaseCallBack callBack);
+
     void getAllUsers(BaseCallBack callBack);
 
     void relative(User guardian, User pupils, BaseCallBack callBack);
@@ -109,7 +121,6 @@ public interface ServerHelper {
     void sendMessageTo(int from, int to, String message, BaseCallBack callBack);
 
     void informTumble(int bgid, BaseCallBack callBack);
-
 
 
 }

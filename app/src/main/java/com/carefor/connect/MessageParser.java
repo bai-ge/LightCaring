@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+
+//TODO 删除
 public class MessageParser {
     private final static String TAG = MessageParser.class.getCanonicalName();
 

@@ -1,16 +1,15 @@
 package com.carefor.telephone;
 
 
-import android.util.Log;
 
-import com.carefor.connect.Connector;
-import com.carefor.data.entity.DeviceModel;
-import com.carefor.data.entity.Transinformation;
+import android.media.AudioManager;
+
+import com.carefor.connect.ConnectedByUDP;
+import com.carefor.connect.NetServerManager;
 import com.carefor.data.source.Repository;
 import com.carefor.data.source.cache.CacheRepository;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.ArrayList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,9 +21,7 @@ public class PhonePresenter implements PhoneContract.Presenter {
     private final static String TAG = PhonePresenter.class.getCanonicalName();
     private PhoneFragment mPhonefragment;
     private Repository mRepository;
-    private TelePhone mTelePhone;
-    private Timer mHeartBeatTimer;
-    private TimerTask mHeartBeatTask;
+
 
     public PhonePresenter(Repository repository, PhoneFragment phoneFragment) {
         mRepository = checkNotNull(repository);
@@ -36,75 +33,59 @@ public class PhonePresenter implements PhoneContract.Presenter {
 
     @Override
     public void start() {
-        Connector connector = Connector.getInstance();
-        CacheRepository cacheRepository = CacheRepository.getInstance();
-
-        mPhonefragment.showLog("device id=" + cacheRepository.getDeviceId());
-        mPhonefragment.showLog("call to="+ cacheRepository.getSelectUser().getDeviceId());
-        mPhonefragment.showLog("通话服务器地址："+cacheRepository.getServerIp()+":"+cacheRepository.getServerPort());
-
-        //当通话界面在前台显示的时候连接器数据直接反馈回这里
-        //当被切换出去是，启动服务，连接器的数据反馈回服务
-        connector.RegistConnectorListener("presenter", mOnConnectorListener);
-
-        if (!connector.isConnectServer()) {
-            connector.afxConnectServer();
-        }
         initPhoneLayout();
+        TelePhone.getInstance().setOnTelePhoneListener(mTelePhoneListener);
+
     }
 
     private void initPhoneLayout() {
         TelePhone telePhone = TelePhone.getInstance();
-        DeviceModel deviceModel;
-        deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-        if(deviceModel != null){
-            mPhonefragment.showLog("对方设备");
-            deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-            mPhonefragment.showLog("Local:"+deviceModel.getLocalIp()+":"+deviceModel.getLocalUdpPort());
-            mPhonefragment.showLog("Remote:"+deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
-            mPhonefragment.showAddress(deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
+
+        mPhonefragment.showDelayTime(telePhone.getDelayTime());
+        mPhonefragment.showName(telePhone.getTalkWithName());
+
+        if(CacheRepository.getInstance().isP2PConnectSuccess()){
+            ConnectedByUDP connectedByUDP = NetServerManager.getInstance().getUDPConnectorById(telePhone.getTalkWithId());
+            if(connectedByUDP != null && connectedByUDP.isConnected()){
+                mPhonefragment.showAddress(connectedByUDP.getAddress().getStringRemoteAddress());
+            }else{
+                mPhonefragment.showAddress(CacheRepository.getInstance().getServerIp()+":"+CacheRepository.getInstance().getServerUdpPort());
+            }
         }else{
             mPhonefragment.showAddress(CacheRepository.getInstance().getServerIp()+":"+CacheRepository.getInstance().getServerUdpPort());
         }
 
-        if(CacheRepository.getInstance().isP2PConnectSuccess()){
-            mPhonefragment.showLog("P2P连接建立成功");
-            mPhonefragment.showAddress(CacheRepository.getInstance().getP2PIp()+":"+CacheRepository.getInstance().getP2PPort());
-
+        ArrayList<TelePhone.LogBean> logs = (ArrayList<TelePhone.LogBean>) telePhone.getLogs().clone();
+        for (TelePhone.LogBean logBean : logs){
+            mPhonefragment.showLog(logBean);
         }
 
         switch (telePhone.getStatus()) {
             case TelePhone.Status.LEISURE:
                 mPhonefragment.showStatus("空闲");
-                mPhonefragment.showLog("空闲");
+                mPhonefragment.showProgress(false);
                 break;
             case TelePhone.Status.CALLING:
                 mPhonefragment.hidePickUpBtn();
-                mPhonefragment.showStatus("正在呼叫中");
-                mPhonefragment.showLog("正在呼叫中");
-                mPhonefragment.showName(CacheRepository.getInstance().getTalkWith());
+                mPhonefragment.showProgress(true);
+                mPhonefragment.showStatus("正在呼叫");
                 break;
             case TelePhone.Status.CALLED:
-                mPhonefragment.showName(CacheRepository.getInstance().getTalkWith());
                 mPhonefragment.showStatus("被呼叫中");
-                mPhonefragment.showLog("被呼叫中");
+                mPhonefragment.showProgress(false);
 
                 break;
             case TelePhone.Status.BUSY:
+
+                mPhonefragment.hidePickUpBtn();
                 mPhonefragment.showStatus("通话中");
-                mPhonefragment.showLog("通话中");
+                mPhonefragment.showProgress(false);
                 break;
             case TelePhone.Status.ERROR:
                 mPhonefragment.showStatus("错误");
-                mPhonefragment.showLog("错误");
+                mPhonefragment.showProgress(false);
                 break;
         }
-        if(CacheRepository.getInstance().getSelectUser() != null){
-            mPhonefragment.showName(CacheRepository.getInstance().getSelectUser().getName());
-        }
-        //TODO 先显示当前的一些状态再设置监听器
-
-        telePhone.setOnTelePhoneListener(mTelePhoneListener);
     }
 
     @Override
@@ -112,7 +93,6 @@ public class PhonePresenter implements PhoneContract.Presenter {
         mPhonefragment.showLog("您已挂断电话");
         TelePhone.getInstance().onHangUp(new TelePhoneAPI.BaseCallBackAdapter(){});
         CacheRepository.getInstance().setP2PConnectSuccess(false);
-        mPhonefragment.close();
     }
 
 
@@ -136,6 +116,16 @@ public class PhonePresenter implements PhoneContract.Presenter {
         }
 
         @Override
+        public void showName(String name) {
+            mPhonefragment.showName(name);
+        }
+
+        @Override
+        public void showAddress(String address) {
+            mPhonefragment.showAddress(address);
+        }
+
+        @Override
         public void exceptionCaught(Throwable cause) {
             mPhonefragment.showLog("异常:" + cause.getMessage());
         }
@@ -144,70 +134,39 @@ public class PhonePresenter implements PhoneContract.Presenter {
         public void showDelay(long delay) {
             mPhonefragment.showDelayTime(delay);
         }
-    };
-
-    private Connector.OnConnectorListener mOnConnectorListener = new Connector.OnConnectorListener() {
-        @Override
-        public void beCalled(DeviceModel deviceModel) {
-            Log.d(TAG, "执行者接收到呼叫信息");
-            mPhonefragment.showAddress("Local:"+deviceModel.getLocalIp()+":"+deviceModel.getLocalUdpPort()+"" +
-                    "Remote:"+deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
-            mPhonefragment.showName(deviceModel.getDeviceidId());
-            mPhonefragment.showStatus("被呼叫中");
-        }
-
-        @Override
-        public void pickUp(Transinformation tranfor) {
-            DeviceModel deviceModel;
-            deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-            if(deviceModel != null){
-                mPhonefragment.showLog("对方设备");
-                deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-                mPhonefragment.showLog("Local:"+deviceModel.getLocalIp()+":"+deviceModel.getLocalUdpPort());
-                mPhonefragment.showLog("Remote:"+deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
-                mPhonefragment.showAddress(deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
-            }
-            mPhonefragment.showLog("对方已经接听" );
-        }
-
-        @Override
-        public void handUp(Transinformation tranfor) {
-            mPhonefragment.showLog("对方已经挂断" );
+        public void onStop(){
             mPhonefragment.close();
+            TelePhone.getInstance().setOnTelePhoneListener(null);
         }
 
         @Override
-        public void connectSuccess() {
-            CacheRepository cacheRepository = CacheRepository.getInstance();
-            mPhonefragment.showLog("成功连接服务器:" + cacheRepository.getServerIp() + ":" + cacheRepository.getServerPort());
-        }
+        public void onChange(int status) {
+            switch (status) {
+                case TelePhone.Status.LEISURE:
+                    mPhonefragment.showStatus("空闲");
+                    mPhonefragment.showProgress(false);
+                    break;
+                case TelePhone.Status.CALLING:
+                    mPhonefragment.hidePickUpBtn();
+                    mPhonefragment.showProgress(true);
+                    mPhonefragment.showStatus("正在呼叫");
+                    break;
+                case TelePhone.Status.CALLED:
+                    mPhonefragment.showStatus("被呼叫中");
+                    mPhonefragment.showProgress(false);
 
-        @Override
-        public void loginSuccess() {
-            CacheRepository cacheRepository = CacheRepository.getInstance();
-            mPhonefragment.showLog("登录成功");
-            mPhonefragment.showLog("localAddress=" + cacheRepository.getLocalIp() + ":" + cacheRepository.getLocalPort());
-            mPhonefragment.showLog("remoteAddress=" + cacheRepository.getRemoteIp() + ":" + cacheRepository.getRemotePort());
-        }
-
-        @Override
-        public void receviceP2P(String device_id, String ip, int port) {
-            DeviceModel deviceModel;
-            deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-            if(deviceModel != null){
-                mPhonefragment.showLog("对方设备");
-                deviceModel = CacheRepository.getInstance().getTalkWithDevice();
-                mPhonefragment.showLog("Local:"+deviceModel.getLocalIp()+":"+deviceModel.getLocalUdpPort());
-                mPhonefragment.showLog("Remote:"+deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
-                mPhonefragment.showAddress(deviceModel.getRemoteIp()+":"+deviceModel.getRemoteUdpPort());
+                    break;
+                case TelePhone.Status.BUSY:
+                    mPhonefragment.setAudioMode(AudioManager.MODE_IN_COMMUNICATION);
+                    mPhonefragment.hidePickUpBtn();
+                    mPhonefragment.showStatus("通话中");
+                    mPhonefragment.showProgress(false);
+                    break;
+                case TelePhone.Status.ERROR:
+                    mPhonefragment.showStatus("错误");
+                    mPhonefragment.showProgress(false);
+                    break;
             }
-            mPhonefragment.showAddress(ip+":"+port);
-            mPhonefragment.showLog("成功建立P2P连接");
-        }
-
-        @Override
-        public void disconnected(String mid) {
-
         }
     };
 }

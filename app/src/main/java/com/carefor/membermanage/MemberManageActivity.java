@@ -42,7 +42,7 @@ public class MemberManageActivity extends BaseActivity {
 
     private ScrollChildSwipeRefreshLayout mSwipeRefreshLayout;//下拉刷新组件
 
-    private Toast mToast;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,7 +65,6 @@ public class MemberManageActivity extends BaseActivity {
         });
 
         listview = (ListView) findViewById(R.id.listview);
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
         // Set up progress indicator
         mSwipeRefreshLayout =
@@ -207,26 +206,16 @@ public class MemberManageActivity extends BaseActivity {
                     super.loadAUser(u);
                     Log.d(TAG, "紧急联系人" + u);
                     CacheRepository.getInstance().setSelectUser(u);
-                    CacheRepository.getInstance().setTalkWith(u.getDeviceId());
                     CacheRepository.getInstance().saveConfig(getApplicationContext());
                 }
             });
             CacheRepository.getInstance().setSelectUser(user);
             CacheRepository.getInstance().saveConfig(getApplicationContext());
             onBackPressed();
-
         }
     };
 
-    private void showTip(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mToast.setText(text);
-                mToast.show();
-            }
-        });
-    }
+
     private void setTitle(final String title){
         runOnUiThread(new Runnable() {
             @Override

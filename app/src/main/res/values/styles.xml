@@ -15,6 +15,8 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+
+
     <!-- Activity主题 -->
     <style name="Transparent.holo" parent="@android:style/Theme.Holo.Light.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
@@ -180,4 +182,52 @@
         <item name="android:textOff">""</item>
         <item name="android:textOn">""</item>
     </style>
+
+    <!--打电话主题-->
+    <style name="Telephone"  parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/gray_status</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="more_item_group">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingLeft">19dp</item>
+        <item name="android:paddingRight">19dp</item>
+    </style>
+
+    <style name="more_item_area">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@color/white_trans10</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="more_item_title_tv">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:drawablePadding">15dp</item>
+        <item name="android:drawableRight">@drawable/right</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+
+
+    <style name="more_item_area_divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/black_trans30</item>
+    </style>
+
+    <style name="more_item_area_ripple">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
 </resources>

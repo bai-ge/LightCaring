@@ -36,6 +36,10 @@ public class Parm {
     public static final String RECEIVEU_ID = "receiveUid";
     public static final String CONTENT = "content";
 
+    public static final String ACCURACY = "accuracy";
+    public static final String BATTERY_PERCENT = "battery_percent";
+    public static final String SHOW_NOTIFICATION = "show_notification";
+
 
     public static final String LOCATION = "Location";
     public static final String JWD = "JWD";
