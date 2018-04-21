@@ -11,6 +11,7 @@ import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.carefor.BaseActivity;
@@ -19,6 +20,8 @@ import com.carefor.data.source.local.LocalRepository;
 import com.carefor.mainui.Manifest;
 import com.carefor.mainui.R;
 import com.carefor.util.ActivityUtils;
+import com.yhao.floatwindow.FloatWindow;
+import com.yhao.floatwindow.Screen;
 
 import java.util.List;
 
@@ -28,11 +31,18 @@ import java.util.List;
  */
 
 public class PhoneActivity extends BaseActivity {
+    private final static String TAG = PhoneActivity.class.getCanonicalName();
+
     private Toast mToast;
+
+
 
     //屏幕控制
     private PowerManager.WakeLock mWakelock;
 
+    /**
+     * @param savedInstanceState
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,12 +103,15 @@ public class PhoneActivity extends BaseActivity {
                 showTip("获取权限失败："+stringBuffer.toString());
             }
         });
+
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         mWakelock.acquire();
+//        FloatWindow.get(TAG).show();
     }
 
     @Override
@@ -107,7 +120,12 @@ public class PhoneActivity extends BaseActivity {
         if(mWakelock != null){
             mWakelock.release();
         }
+//        FloatWindow.get(TAG).hide();
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        FloatWindow.destroy(TAG);
+    }
 }

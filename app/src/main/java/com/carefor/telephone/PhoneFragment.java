@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +25,8 @@ import android.widget.Toast;
 import com.carefor.mainui.R;
 import com.carefor.view.CircleImageView;
 import com.carefor.view.ProgressBall;
+import com.yhao.floatwindow.FloatWindow;
+import com.yhao.floatwindow.Screen;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -53,7 +56,12 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     private Button mBtnSilence;
     private Button mBtnRecord;
     private Button mBtnLoudspeaker;
+
+    private ImageView mFloatView;
+
     private SimpleDateFormat mSimpleDateFormat;
+
+
 
     //距离感应器
     private SensorManager mSensorManager;
@@ -164,6 +172,20 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
 //        mEditLog.setVisibility(View.INVISIBLE);
 //        mTextDelayTime.setVisibility(View.INVISIBLE);
 //        mTextAddress.setVisibility(View.INVISIBLE);
+
+
+        mFloatView = new ImageView(getContext());
+        mFloatView.setImageResource(R.drawable.icon);
+
+        FloatWindow
+                .with(getActivity().getApplicationContext())
+                .setView(mFloatView)
+                .setTag(TAG)
+                .setWidth(100)                   //100px
+                .setHeight(Screen.width,0.2f)    //屏幕宽度的 20%
+                .setX(100)                       //100px
+                .setY(Screen.height,0.3f)        //屏幕高度的 30%
+                .build();
     }
 
     @Override
@@ -374,5 +396,11 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
         if(activity != null){
             activity.finish();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        FloatWindow.destroy(TAG);
     }
 }
