@@ -144,6 +144,7 @@ public class AlarmClockEditFragment extends Fragment implements AlarmClockContra
             Calendar calendar = new GregorianCalendar();
             mAlarmClock.setHour(calendar.get(Calendar.HOUR_OF_DAY));
             mAlarmClock.setMinute(calendar.get(Calendar.MINUTE));
+            mAlarmClock.setVolume(8);
         }
         Log.d(TAG, "medicine size ="+mAlarmClock.getMedicineList().size());
         Log.d(TAG, mAlarmClock.toString());

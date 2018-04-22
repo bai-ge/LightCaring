@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -23,9 +24,11 @@ import android.widget.Toast;
 
 
 import com.carefor.mainui.R;
+import com.carefor.util.BitmapTools;
 import com.carefor.view.CircleImageView;
 import com.carefor.view.ProgressBall;
 import com.yhao.floatwindow.FloatWindow;
+import com.yhao.floatwindow.MoveType;
 import com.yhao.floatwindow.Screen;
 
 import java.text.SimpleDateFormat;
@@ -38,6 +41,7 @@ import java.util.Date;
 
 public class PhoneFragment extends Fragment implements PhoneContract.View , SensorEventListener {
     private final static String TAG = PhoneFragment.class.getCanonicalName();
+    private final static String Helper = "helper";
     private PhoneContract.Presenter mPresenter;
     private Handler mHandler;
     private Toast mToast;
@@ -57,7 +61,15 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     private Button mBtnRecord;
     private Button mBtnLoudspeaker;
 
-    private ImageView mFloatView;
+    private View mFloatView;
+
+    private Button mBtnHelper;
+
+    private Button mBtnHelpPickUp;
+
+    private Button mBtnHelpLoudSpeech;
+
+    private ViewGroup mCtrlLayout;
 
     private SimpleDateFormat mSimpleDateFormat;
 
@@ -77,7 +89,7 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     @Override
     public void onResume() {
         super.onResume();
-
+        FloatWindow.get(TAG).hide();
         mSensorManager.registerListener(this , mSensor, SensorManager.SENSOR_DELAY_NORMAL);
         mPresenter.start();
     }
@@ -173,19 +185,83 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
 //        mTextDelayTime.setVisibility(View.INVISIBLE);
 //        mTextAddress.setVisibility(View.INVISIBLE);
 
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        mFloatView = inflater.inflate(R.layout.float_phone_helper, null);
 
-        mFloatView = new ImageView(getContext());
-        mFloatView.setImageResource(R.drawable.icon);
+//        mFloatView = new ImageView(getContext());
+//        mFloatView.setImageResource(R.drawable.icon);
 
+        //由于FloatWindow 不支持动态更改大小，所以申请两个悬浮窗口进行切换
         FloatWindow
                 .with(getActivity().getApplicationContext())
                 .setView(mFloatView)
-                .setTag(TAG)
-                .setWidth(100)                   //100px
-                .setHeight(Screen.width,0.2f)    //屏幕宽度的 20%
+                .setTag(Helper)
+                .setWidth(BitmapTools.dp2px(getContext(), 80))                   //100px
+                .setHeight(BitmapTools.dp2px(getContext(), 80))    //屏幕宽度的 20% Screen.width,0.2f
                 .setX(100)                       //100px
                 .setY(Screen.height,0.3f)        //屏幕高度的 30%
+                .setMoveType(MoveType.slide)
                 .build();
+
+
+
+        FloatWindow
+                .with(getActivity().getApplicationContext())
+                .setView(R.layout.float_phone_helper)
+                .setTag(TAG)
+//                .setWidth(BitmapTools.dp2px(getContext(), 230))                  //100px
+//                .setHeight(BitmapTools.dp2px(getContext(), 100))    //屏幕宽度的 20% Screen.width,0.2f
+                .setX(100)                       //100px
+                .setY(Screen.height,0.3f)        //屏幕高度的 30%
+                .setMoveType(MoveType.slide)
+                .build();
+
+              //  initFloatView( FloatWindow.get(TAG).getView());
+        FloatWindow.get(Helper).getView().findViewById(R.id.btn_helper).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int x, y;
+                x = FloatWindow.get(Helper).getX();
+                y = FloatWindow.get(Helper).getY();
+                FloatWindow.get(Helper).hide();
+                FloatWindow.get(TAG).updateX(x);
+                FloatWindow.get(TAG).updateY(y);
+                FloatWindow.get(TAG).show();
+
+            }
+        });
+        FloatWindow.get(TAG).getView().findViewById(R.id.btn_helper).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int x, y;
+                x = FloatWindow.get(TAG).getX();
+                y = FloatWindow.get(TAG).getY();
+                FloatWindow.get(TAG).hide();
+                FloatWindow.get(Helper).updateX(x);
+                FloatWindow.get(Helper).updateY(y);
+                FloatWindow.get(Helper).show();
+            }
+        });
+    }
+
+
+    private void initFloatView(View floatView){
+        mBtnHelper = (Button) floatView.findViewById(R.id.btn_helper);
+        mBtnHelpPickUp = (Button) floatView.findViewById(R.id.btn_pick_up_helper);
+        mBtnLoudspeaker = (Button) floatView.findViewById(R.id.btn_pick_up_helper);
+        mCtrlLayout = (ViewGroup) floatView.findViewById(R.id.ctrl_layout);
+
+        mBtnHelper.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mCtrlLayout.getVisibility() == View.VISIBLE){
+                    mCtrlLayout.setVisibility(View.INVISIBLE);
+                    FloatWindow.get(TAG).updateX(120);
+                }else{
+                    mCtrlLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     @Override
@@ -402,5 +478,6 @@ public class PhoneFragment extends Fragment implements PhoneContract.View , Sens
     public void onDestroy() {
         super.onDestroy();
         FloatWindow.destroy(TAG);
+        FloatWindow.destroy(Helper);
     }
 }

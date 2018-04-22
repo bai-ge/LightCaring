@@ -8,7 +8,10 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/SwipeBackLayout" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/daemon" />
+            <option value="$PROJECT_DIR$/imagepicker" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
